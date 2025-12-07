@@ -1,0 +1,112 @@
+# ============================================
+# ARCHIVO .env PARA HOSTINGER - EJEMPLO
+# ============================================
+# Copia este contenido y créalo como .env en el servidor
+# Luego edita los valores con tus datos reales
+# ============================================
+
+# ============================================
+# CONFIGURACIÓN DE LA APLICACIÓN
+# ============================================
+APP_NAME="Flat Rate Imports"
+APP_ENV=production
+APP_KEY=base64:TU_CLAVE_AQUI_GENERADA_CON_PHP_ARTISAN_KEY_GENERATE
+APP_DEBUG=false
+APP_TIMEZONE=UTC
+APP_URL=https://tudominio.com
+
+# ============================================
+# IDIOMA Y LOCALIZACIÓN
+# ============================================
+APP_LOCALE=es
+APP_FALLBACK_LOCALE=es
+APP_FAKER_LOCALE=es_ES
+
+# ============================================
+# MODO DE MANTENIMIENTO
+# ============================================
+APP_MAINTENANCE_DRIVER=file
+
+# ============================================
+# CONFIGURACIÓN DE ENCRIPTACIÓN
+# ============================================
+BCRYPT_ROUNDS=12
+
+# ============================================
+# CONFIGURACIÓN DE LOGS
+# ============================================
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=error
+
+# ============================================
+# BASE DE DATOS - HOSTINGER
+# ============================================
+# NOTA: En Hostinger, las credenciales suelen tener formato:
+# - Base de datos: u123456789_nombre_db
+# - Usuario: u123456789_usuario
+# - Host: localhost (o la IP que te proporcione Hostinger)
+# ============================================
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=u123456789_nombre_base_datos
+DB_USERNAME=u123456789_usuario_db
+DB_PASSWORD=tu_contraseña_segura_aqui
+
+# ============================================
+# CONFIGURACIÓN DE SESIONES
+# ============================================
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+
+# ============================================
+# CONFIGURACIÓN DE CACHE
+# ============================================
+CACHE_STORE=database
+CACHE_PREFIX=
+
+# ============================================
+# CONFIGURACIÓN DE COLAS (QUEUES)
+# ============================================
+QUEUE_CONNECTION=database
+
+# ============================================
+# CONFIGURACIÓN DE CORREO - HOSTINGER SMTP
+# ============================================
+# Hostinger usa smtp.hostinger.com
+# Puerto: 587 (TLS) o 465 (SSL)
+# ============================================
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.hostinger.com
+MAIL_PORT=587
+MAIL_USERNAME=noreply@tudominio.com
+MAIL_PASSWORD=tu_contraseña_del_correo
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="noreply@tudominio.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+# ============================================
+# CONFIGURACIÓN DE ARCHIVOS
+# ============================================
+FILESYSTEM_DISK=local
+
+# ============================================
+# NOTAS IMPORTANTES
+# ============================================
+# 1. Después de crear este archivo, ejecuta:
+#    php artisan key:generate
+#
+# 2. Asegúrate de que APP_DEBUG=false en producción
+#
+# 3. Usa siempre HTTPS en APP_URL para producción
+#
+# 4. Configura permisos: chmod 600 .env
+#
+# 5. NUNCA subas este archivo a Git o repositorios públicos
+# ============================================
+
