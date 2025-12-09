@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración para el botón flotante de WhatsApp
+    |
+    */
+
+    'whatsapp_number' => env('WHATSAPP_NUMBER', '593999999999'),
+    'whatsapp_message' => env('WHATSAPP_MESSAGE', 'Hola, me interesa conocer más sobre sus servicios de importación.'),
+
 ];

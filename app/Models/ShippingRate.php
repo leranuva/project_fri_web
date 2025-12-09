@@ -72,4 +72,69 @@ class ShippingRate extends Model
             ->ordered()
             ->first();
     }
+
+    /**
+     * Obtener el peso mínimo de las tarifas activas para un método
+     */
+    public static function getMinWeightForMethod(string $method): ?float
+    {
+        $rate = static::active()
+            ->forMethod($method)
+            ->orderBy('min_weight')
+            ->first();
+        
+        return $rate ? (float) $rate->min_weight : null;
+    }
+
+    /**
+     * Obtener el peso máximo de las tarifas activas para un método
+     */
+    public static function getMaxWeightForMethod(string $method): ?float
+    {
+        $rate = static::active()
+            ->forMethod($method)
+            ->whereNotNull('max_weight')
+            ->orderByDesc('max_weight')
+            ->first();
+        
+        return $rate ? (float) $rate->max_weight : null;
+    }
+
+    /**
+     * Obtener información de rangos de peso para un método
+     */
+    public static function getWeightRangesForMethod(string $method): array
+    {
+        $rates = static::active()
+            ->forMethod($method)
+            ->ordered()
+            ->get();
+        
+        if ($rates->isEmpty()) {
+            return [
+                'min_weight' => null,
+                'max_weight' => null,
+                'has_unlimited' => false,
+                'ranges' => []
+            ];
+        }
+        
+        $minWeight = $rates->min('min_weight');
+        $maxWeight = $rates->whereNotNull('max_weight')->max('max_weight');
+        $hasUnlimited = $rates->whereNull('max_weight')->isNotEmpty();
+        
+        $ranges = $rates->map(function ($rate) {
+            return [
+                'min' => (float) $rate->min_weight,
+                'max' => $rate->max_weight ? (float) $rate->max_weight : null,
+            ];
+        })->toArray();
+        
+        return [
+            'min_weight' => (float) $minWeight,
+            'max_weight' => $maxWeight ? (float) $maxWeight : null,
+            'has_unlimited' => $hasUnlimited,
+            'ranges' => $ranges
+        ];
+    }
 }

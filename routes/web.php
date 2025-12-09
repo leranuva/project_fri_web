@@ -20,6 +20,7 @@ Route::get('/tracking/{trackingNumber}', [\App\Http\Controllers\TrackingControll
 Route::prefix('api/cotizador')->group(function () {
     Route::post('/calculate', [CotizadorController::class, 'calculate'])->name('cotizador.calculate');
     Route::get('/products', [CotizadorController::class, 'getProducts'])->name('cotizador.products');
+    Route::get('/shipping-methods', [CotizadorController::class, 'getActiveShippingMethods'])->name('cotizador.shippingMethods');
     Route::post('/send-email', [CotizadorController::class, 'sendEmail'])->name('cotizador.sendEmail');
 });
 
@@ -71,6 +72,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('cotizador-sections', [\App\Http\Controllers\Admin\CotizadorSectionController::class, 'index'])->name('cotizador-sections.index');
     Route::patch('cotizador-sections/{id}', [\App\Http\Controllers\Admin\CotizadorSectionController::class, 'update'])->name('cotizador-sections.update');
     Route::get('dashboard-guide', [\App\Http\Controllers\Admin\DashboardGuideController::class, 'index'])->name('dashboard-guide.index');
+    Route::get('project-costs', [\App\Http\Controllers\Admin\ProjectCostsController::class, 'index'])->name('project-costs.index');
 });
 
 require __DIR__.'/auth.php';

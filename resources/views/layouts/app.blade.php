@@ -57,5 +57,8 @@
             {{-- Footer --}}
             @include('components.footer')
         </div>
+
+        {{-- Botón Flotante de WhatsApp --}}
+        @include('components.whatsapp-float')
     </body>
 </html>

@@ -21,17 +21,40 @@ class CotizadorController extends Controller
         // Obtener productos activos desde la base de datos
         $products = Product::active()->ordered()->get();
         
-        // Obtener métodos de envío únicos desde la base de datos
+        // Obtener métodos de envío únicos activos desde la base de datos
         $shippingMethods = ShippingRate::active()
             ->select('method')
             ->distinct()
             ->pluck('method')
             ->toArray();
         
+        // Obtener rangos de peso para cada método activo
+        $shippingMethodRanges = [];
+        foreach ($shippingMethods as $method) {
+            $shippingMethodRanges[$method] = ShippingRate::getWeightRangesForMethod($method);
+        }
+        
         // Obtener configuración del cotizador
         $cotizadorSection = \App\Models\CotizadorSection::getActive();
         
-        return view('cotizador', compact('products', 'shippingMethods', 'cotizadorSection'));
+        return view('cotizador', compact('products', 'shippingMethods', 'shippingMethodRanges', 'cotizadorSection'));
+    }
+    
+    /**
+     * Obtener métodos de envío activos (endpoint API)
+     */
+    public function getActiveShippingMethods(): JsonResponse
+    {
+        $methods = ShippingRate::active()
+            ->select('method')
+            ->distinct()
+            ->pluck('method')
+            ->toArray();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $methods
+        ]);
     }
 
     /**
@@ -40,13 +63,28 @@ class CotizadorController extends Controller
     public function calculate(Request $request): JsonResponse
     {
         try {
-            // Validar datos básicos
+            // Obtener métodos de envío activos dinámicamente
+            $activeMethods = ShippingRate::active()
+                ->select('method')
+                ->distinct()
+                ->pluck('method')
+                ->toArray();
+            
+            if (empty($activeMethods)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No hay métodos de envío disponibles. Por favor configure las tarifas de envío.',
+                    'errors' => ['No hay métodos de envío configurados']
+                ], 422);
+            }
+            
+            // Validar datos básicos con métodos activos dinámicos
             $data = $request->validate([
                 'product' => 'required|string',
                 'quantity' => 'required|numeric|min:0.01',
                 'weight' => 'required|numeric|min:0.01',
                 'unitValue' => 'required|numeric|min:0.01',
-                'shippingMethod' => 'required|string|in:maritimo,aereo,aereoExpres,courier4x4',
+                'shippingMethod' => ['required', 'string', 'in:' . implode(',', $activeMethods)],
             ]);
 
             // Validaciones de negocio usando el Helper

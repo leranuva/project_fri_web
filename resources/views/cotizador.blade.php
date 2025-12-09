@@ -161,10 +161,19 @@
                                 required
                             >
                                 <option value="" style="background-color: rgba(30, 30, 30, 0.95); color: rgba(255, 255, 255, 0.7);">Seleccione un método</option>
-                                <option value="maritimo" style="background-color: rgba(30, 30, 30, 0.95); color: white;">Marítimo</option>
-                                <option value="aereo" style="background-color: rgba(30, 30, 30, 0.95); color: white;">Aéreo</option>
-                                <option value="aereoExpres" style="background-color: rgba(30, 30, 30, 0.95); color: white;">Aéreo Express</option>
-                                <option value="courier4x4" style="background-color: rgba(30, 30, 30, 0.95); color: white;">Courier 4x4 (Arancel fijo $20)</option>
+                                @php
+                                    $methodLabels = [
+                                        'maritimo' => 'Marítimo',
+                                        'aereo' => 'Aéreo',
+                                        'aereoExpres' => 'Aéreo Express',
+                                        'courier4x4' => 'Courier 4x4 (Arancel fijo $20)'
+                                    ];
+                                @endphp
+                                @foreach($shippingMethods as $method)
+                                    @if(isset($methodLabels[$method]))
+                                        <option value="{{ $method }}" style="background-color: rgba(30, 30, 30, 0.95); color: white;">{{ $methodLabels[$method] }}</option>
+                                    @endif
+                                @endforeach
                             </select>
                         </x-ui.form-group>
                     </div>
@@ -625,6 +634,7 @@
             return {
                 products: @json($productsArray),
                 shippingMethods: @json($shippingMethods),
+                shippingMethodRanges: @json($shippingMethodRanges ?? []),
                 formData: {
                     product: '',
                     quantity: 1,
@@ -712,6 +722,12 @@
                         return false;
                     }
                     
+                    // Validar que el método seleccionado esté en la lista de métodos activos
+                    if (!this.shippingMethods.includes(this.formData.shippingMethod)) {
+                        this.showError('⚠️ El método de envío seleccionado no está disponible. Por favor seleccione otro método.');
+                        return false;
+                    }
+                    
                     // Validar valores numéricos
                     const totalWeight = this.formData.weight * this.formData.quantity;
                     if (this.formData.quantity <= 0 || this.formData.weight <= 0 || this.formData.unitValue <= 0) {
@@ -719,30 +735,45 @@
                         return false;
                     }
                     
-                    // Validar peso mínimo marítimo
-                    if (this.formData.shippingMethod === 'maritimo' && totalWeight < 100) {
-                        this.showError(`⚠️ Para envío marítimo, el peso mínimo es de 100 libras.\n\nPeso actual: ${totalWeight.toFixed(2)} libras`);
-                        return false;
+                    // Validar peso según las tarifas activas del método seleccionado
+                    if (this.formData.shippingMethod && this.shippingMethodRanges[this.formData.shippingMethod]) {
+                        const ranges = this.shippingMethodRanges[this.formData.shippingMethod];
+                        const minWeight = ranges.min_weight;
+                        const maxWeight = ranges.max_weight;
+                        const hasUnlimited = ranges.has_unlimited;
+                        
+                        // Verificar si el peso está dentro de algún rango
+                        let weightInRange = false;
+                        for (const range of ranges.ranges) {
+                            if (totalWeight >= range.min && (range.max === null || totalWeight <= range.max)) {
+                                weightInRange = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!weightInRange) {
+                            if (minWeight !== null && totalWeight < minWeight) {
+                                this.showError(`⚠️ Para envío ${this.formData.shippingMethod}, el peso mínimo es de ${minWeight} libras.\n\nPeso actual: ${totalWeight.toFixed(2)} libras`);
+                                return false;
+                            } else if (maxWeight !== null && totalWeight > maxWeight && !hasUnlimited) {
+                                this.showError(`⚠️ Para envío ${this.formData.shippingMethod}, el peso máximo es de ${maxWeight} libras.\n\nPeso actual: ${totalWeight.toFixed(2)} libras`);
+                                return false;
+                            } else {
+                                // Construir mensaje con rangos disponibles
+                                const rangesText = ranges.ranges.map(r => {
+                                    if (r.max === null) {
+                                        return `${r.min}+ libras`;
+                                    }
+                                    return `${r.min}-${r.max} libras`;
+                                }).join(', ');
+                                this.showError(`⚠️ No hay tarifa disponible para el peso ${totalWeight.toFixed(2)} libras con el método ${this.formData.shippingMethod}.\n\nRangos disponibles: ${rangesText}`);
+                                return false;
+                            }
+                        }
                     }
                     
-                    // Validar aéreo express
-                    if (this.formData.shippingMethod === 'aereoExpres') {
-                        if (totalWeight < 50) {
-                            this.showError(`⚠️ Para envío Aéreo-Express, el peso mínimo es de 50 libras.\n\nPeso actual: ${totalWeight.toFixed(2)} libras`);
-                            return false;
-                        }
-                        if (totalWeight > 200) {
-                            this.showError(`⚠️ Para envío Aéreo-Express, el peso máximo permitido es de 200 libras.\n\nPeso actual: ${totalWeight.toFixed(2)} libras`);
-                            return false;
-                        }
-                    }
-                    
-                    // Validar Courier 4x4
+                    // Validar Courier 4x4 (validaciones específicas adicionales)
                     if (this.formData.shippingMethod === 'courier4x4') {
-                        if (totalWeight > 8.82) {
-                            this.showError(`⚠️ Para envío Courier 4x4, el peso máximo es de 8.82 libras (4 kg).\n\nPeso actual: ${totalWeight.toFixed(2)} libras`);
-                            return false;
-                        }
                         const totalValueFob = this.formData.unitValue * this.formData.quantity;
                         if (totalValueFob > 400) {
                             this.showError(`⚠️ Para envío Courier 4x4, el valor FOB máximo es de $400.\n\nValor FOB actual: $${totalValueFob.toFixed(2)}`);

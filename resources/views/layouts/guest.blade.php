@@ -62,5 +62,10 @@
         @if(!request()->routeIs('login') && !request()->routeIs('register'))
             @include('components.footer')
         @endif
+
+        {{-- Botón Flotante de WhatsApp --}}
+        @if(!request()->routeIs('login') && !request()->routeIs('register'))
+            @include('components.whatsapp-float')
+        @endif
     </body>
 </html>

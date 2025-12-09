@@ -96,7 +96,29 @@ class CotizadorHelper
         $rate = ShippingRate::findRate($method, $weight);
         
         if (!$rate) {
-            throw new \Exception("No se encontró una tarifa para el peso {$weight} lbs con el método '{$method}'. Por favor verifique la configuración de tarifas.");
+            // Obtener información de rangos para mostrar mensaje más útil
+            $weightRanges = ShippingRate::getWeightRangesForMethod($method);
+            $minWeight = $weightRanges['min_weight'];
+            $maxWeight = $weightRanges['max_weight'];
+            
+            if ($minWeight === null) {
+                throw new \Exception("No hay tarifas activas para el método '{$method}'. Por favor active al menos una tarifa de envío.");
+            }
+            
+            $rangesText = collect($weightRanges['ranges'])->map(function ($range) {
+                if ($range['max'] === null) {
+                    return "{$range['min']}+ libras";
+                }
+                return "{$range['min']}-{$range['max']} libras";
+            })->join(', ');
+            
+            if ($weight < $minWeight) {
+                throw new \Exception("Para envío {$method}, el peso mínimo es de {$minWeight} libras. Peso actual: {$weight} libras.");
+            } elseif ($maxWeight !== null && $weight > $maxWeight && !$weightRanges['has_unlimited']) {
+                throw new \Exception("Para envío {$method}, el peso máximo es de {$maxWeight} libras. Peso actual: {$weight} libras.");
+            } else {
+                throw new \Exception("No hay tarifa disponible para el peso {$weight} lbs con el método '{$method}'. Rangos disponibles: {$rangesText}.");
+            }
         }
         
         $costPerPound = (float) $rate->cost_per_pound;
@@ -251,8 +273,17 @@ class CotizadorHelper
             $errors[] = 'Por favor seleccione un producto válido.';
         }
         
+        // Obtener métodos de envío activos dinámicamente
+        $activeMethods = ShippingRate::active()
+            ->select('method')
+            ->distinct()
+            ->pluck('method')
+            ->toArray();
+        
         if (empty($data['shippingMethod']) || $data['shippingMethod'] === 'selectMetodo') {
             $errors[] = 'Por favor seleccione un método de envío válido.';
+        } elseif (!in_array($data['shippingMethod'], $activeMethods)) {
+            $errors[] = 'El método de envío seleccionado no está disponible. Por favor seleccione otro método.';
         }
         
         $quantity = (float) ($data['quantity'] ?? 0);
@@ -264,20 +295,42 @@ class CotizadorHelper
             $errors[] = 'Por favor ingrese valores válidos.';
         }
         
+        $shippingMethod = $data['shippingMethod'] ?? '';
+        
+        // Validar peso según las tarifas activas del método seleccionado
+        if (!empty($shippingMethod) && in_array($shippingMethod, $activeMethods)) {
+            $weightRanges = ShippingRate::getWeightRangesForMethod($shippingMethod);
+            
+            if ($weightRanges['min_weight'] !== null) {
+                // Verificar si hay una tarifa que cubra este peso
+                $rate = ShippingRate::findRate($shippingMethod, $totalWeight);
+                
+                if (!$rate) {
+                    // No hay tarifa para este peso, mostrar rango válido
+                    $minWeight = $weightRanges['min_weight'];
+                    $maxWeight = $weightRanges['max_weight'];
+                    $hasUnlimited = $weightRanges['has_unlimited'];
+                    
+                    if ($totalWeight < $minWeight) {
+                        $errors[] = "Para envío {$shippingMethod}, el peso mínimo es de {$minWeight} libras. Peso actual: {$totalWeight} libras.";
+                    } elseif ($maxWeight !== null && $totalWeight > $maxWeight && !$hasUnlimited) {
+                        $errors[] = "Para envío {$shippingMethod}, el peso máximo es de {$maxWeight} libras. Peso actual: {$totalWeight} libras.";
+                    } else {
+                        // Peso está fuera de todos los rangos
+                        $rangesText = collect($weightRanges['ranges'])->map(function ($range) {
+                            if ($range['max'] === null) {
+                                return "{$range['min']}+ libras";
+                            }
+                            return "{$range['min']}-{$range['max']} libras";
+                        })->join(', ');
+                        $errors[] = "No hay tarifa disponible para el peso {$totalWeight} libras con el método {$shippingMethod}. Rangos disponibles: {$rangesText}.";
+                    }
+                }
+            }
+        }
+        
+        // Validaciones específicas adicionales (siempre aplican)
         $validations = config('products.validations');
-        
-        if ($data['shippingMethod'] === 'maritimo' && $totalWeight < $validations['maritimo_min_weight']) {
-            $errors[] = 'Para envío marítimo, el peso mínimo es de ' . $validations['maritimo_min_weight'] . ' libras.';
-        }
-        
-        if ($data['shippingMethod'] === 'aereoExpres') {
-            if ($totalWeight < $validations['aereoExpres_min_weight']) {
-                $errors[] = 'Para envío Aéreo-Express, el peso mínimo es de ' . $validations['aereoExpres_min_weight'] . ' libras.';
-            }
-            if ($totalWeight > $validations['aereoExpres_max_weight']) {
-                $errors[] = 'Para envío aereoExpres, el peso máximo permitido es de ' . $validations['aereoExpres_max_weight'] . ' libras.';
-            }
-        }
         
         if ($data['product'] === 'PrendasDeVestirYCalzado' && $totalWeight > $validations['prendas_max_weight']) {
             $errors[] = 'No se puede realizar el envío de prendas de vestir y calzado si el peso excede las ' . $validations['prendas_max_weight'] . ' libras.';
