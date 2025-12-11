@@ -194,3 +194,4 @@ ls -la resources/views/admin/project-costs/index.blade.php
 *Última actualización: 7 de Diciembre 2025*
 *Implementación verificada y lista para despliegue*
 
+

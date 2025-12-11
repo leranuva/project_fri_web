@@ -398,7 +398,7 @@
                                             target="{{ $store->website_url ? '_blank' : '_self' }}"
                                             class="block w-full h-20 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 hover:bg-white/20 transition-colors p-2"
                                         >
-                                            <div class="max-w-full max-h-full flex items-center justify-center">
+                                            <div class="max-w-full max-h-full flex items-center justify-center store-logo-svg">
                                                 {!! $store->logo_url !!}
                                             </div>
                                         </a>
@@ -542,4 +542,37 @@
             </x-ui.container>
         </section>
     </div>
+
+    <style>
+        .store-logo-svg {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .store-logo-svg svg {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            /* NO modificar colores - preservar colores originales del SVG */
+        }
+        
+        /* NO aplicar ningún estilo de color - dejar que los SVG mantengan sus colores originales */
+        .store-logo-svg svg * {
+            /* No sobrescribir ningún atributo de color */
+        }
+        
+        .store-logo:hover svg {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .store-logo:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+    </style>
 </x-guest-layout>

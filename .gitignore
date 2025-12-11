@@ -28,3 +28,6 @@ deploy.sh
 deploy.bat
 *.backup
 favicon.ico.backup
+
+# Archivos temporales de importación
+storage/app/store_logos.json
