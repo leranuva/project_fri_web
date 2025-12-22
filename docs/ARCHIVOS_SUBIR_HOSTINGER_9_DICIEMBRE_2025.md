@@ -111,3 +111,5 @@ scp database/seeders/StoreSeeder.php u671466050@us-bos-web1847.ssh.hostinger.com
 - El seeder está limpio para no sobrescribir logos existentes
 - Los estilos CSS están embebidos en las vistas, no requieren archivos adicionales
 
+
+

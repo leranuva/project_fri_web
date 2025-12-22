@@ -381,7 +381,7 @@
                                 Los cálculos incluyen impuestos, envío y seguro. Los resultados son estimaciones basadas en la información proporcionada.
                             </p>
                             <a 
-                                href="https://flatrateimports.com/" 
+                                href="https://flatrateimports.store/" 
                                 target="_blank"
                                 class="inline-block mt-3 text-sm font-medium text-white hover:text-opacity-80 auth-form-link"
                             >

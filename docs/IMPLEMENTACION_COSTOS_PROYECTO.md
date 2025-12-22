@@ -195,3 +195,5 @@ ls -la resources/views/admin/project-costs/index.blade.php
 *Implementación verificada y lista para despliegue*
 
 
+
+

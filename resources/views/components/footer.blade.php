@@ -22,7 +22,7 @@
                 {{-- Enlaces por defecto si no hay enlaces configurados --}}
                 <li><a href="{{ route('home') }}" class="footer-link">Inicio</a></li>
                 <li><a href="{{ route('cotizador') }}" class="footer-link">Cotizador</a></li>
-                <li><a href="https://flatrateimports.com/" target="_blank" class="footer-link">Tienda</a></li>
+                <li><a href="https://flatrateimports.store/" target="_blank" class="footer-link">Tienda</a></li>
                 @auth
                     <li><a href="{{ route('dashboard') }}" class="footer-link">Dashboard</a></li>
                 @endauth

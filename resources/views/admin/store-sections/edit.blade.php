@@ -146,7 +146,7 @@
                         type="url" 
                         class="auth-form-input" 
                         :value="old('footer_link', $storeSection->footer_link)" 
-                        placeholder="https://flatrateimports.com/"
+                        placeholder="https://flatrateimports.store/"
                     />
                     <p class="mt-1 text-xs text-white/60">URL del enlace que aparece al final de la sección (opcional)</p>
                     <x-input-error class="mt-2" :messages="$errors->get('footer_link')" />

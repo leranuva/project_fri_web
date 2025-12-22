@@ -11,7 +11,9 @@ class BlogSection extends Model
 
     protected $fillable = [
         'title',
+        'subtitle',
         'title_color',
+        'footer_text',
         'button_text',
         'button_link',
         'is_active',

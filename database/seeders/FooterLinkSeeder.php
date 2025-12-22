@@ -31,7 +31,7 @@ class FooterLinkSeeder extends Seeder
             ],
             [
                 'label' => 'Tienda',
-                'url' => 'https://flatrateimports.com/',
+                'url' => 'https://flatrateimports.store/',
                 'type' => 'link',
                 'icon_svg' => null,
                 'order' => 3,

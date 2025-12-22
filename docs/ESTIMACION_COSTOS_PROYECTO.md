@@ -3,7 +3,7 @@
 ## 📊 Resumen Ejecutivo
 
 **Proyecto:** Sistema de Cotización de Importaciones  
-**Desarrollado por:** Lenin Nunez  
+**Desarrollado por:** Lenin Ramiro Nunez Valverde
 **Período real:** Enero 2023 - Diciembre 2024 (24 meses, 2-3 horas/noche)  
 **Horas estimadas:** 1,440 - 2,160 horas  
 **Complejidad:** Alta - Sistema empresarial completo
@@ -263,5 +263,5 @@ Este rango considera:
 ---
 
 *Última actualización: 6 de Diciembre 2025*  
-*Basado en el proyecto real desarrollado por Lenin Nunez*
+*Basado en el proyecto real desarrollado por Lenin Ramiro Nunez Valverde *
 

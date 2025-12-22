@@ -22,7 +22,7 @@
                 </p>
             </div>
 
-            <form method="POST" action="{{ route('admin.stores.store') }}" class="space-y-6">
+            <form method="POST" action="{{ route('admin.stores.store') }}" enctype="multipart/form-data" class="space-y-6">
                 @csrf
 
                 {{-- Nombre --}}
@@ -41,27 +41,80 @@
                     <x-input-error class="mt-2" :messages="$errors->get('name')" />
                 </div>
 
-                {{-- Código SVG del Logo --}}
+                {{-- Logo de la Tienda --}}
                 <div>
-                    <x-input-label for="logo_url" :value="__('Código SVG del Logo')" class="text-white/90 mb-2" />
-                    <textarea
-                        id="logo_url" 
-                        name="logo_url" 
-                        rows="6"
-                        class="auth-form-input font-mono text-sm" 
-                        placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">...</svg>'
-                    >{{ old('logo_url') }}</textarea>
-                    <p class="mt-1 text-xs text-white/60">Ingresa el código SVG completo del logo de la tienda (opcional)</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('logo_url')" />
+                    <x-input-label :value="__('Logo de la Tienda')" class="text-white/90 mb-2" />
                     
-                    {{-- Vista previa del logo --}}
-                    <div id="logo_preview" class="mt-4 p-4 rounded-xl bg-white/5 border border-white/10" style="display: none;">
+                    {{-- Selector de método: SVG o PNG --}}
+                    <div class="mb-4 flex gap-4">
+                        <label class="auth-form-checkbox cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="logo_source" 
+                                value="svg" 
+                                id="logo_source_svg"
+                                {{ old('logo_source', 'svg') === 'svg' ? 'checked' : '' }}
+                                onchange="toggleLogoSource()"
+                            >
+                            <span class="text-white/90">Código SVG</span>
+                        </label>
+                        <label class="auth-form-checkbox cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="logo_source" 
+                                value="png" 
+                                id="logo_source_png"
+                                {{ old('logo_source', 'svg') === 'png' ? 'checked' : '' }}
+                                onchange="toggleLogoSource()"
+                            >
+                            <span class="text-white/90">Subir PNG</span>
+                        </label>
+                    </div>
+
+                    {{-- Campo SVG --}}
+                    <div id="logo_svg_field" style="display: {{ old('logo_source', 'svg') === 'svg' ? 'block' : 'none' }};">
+                        <textarea
+                            id="logo_url" 
+                            name="logo_url" 
+                            rows="6"
+                            class="auth-form-input font-mono text-sm" 
+                            placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">...</svg>'
+                        >{{ old('logo_url') }}</textarea>
+                        <p class="mt-1 text-xs text-white/60">Ingresa el código SVG completo del logo de la tienda (opcional)</p>
+                    </div>
+
+                    {{-- Campo PNG --}}
+                    <div id="logo_png_field" style="display: {{ old('logo_source', 'svg') === 'png' ? 'block' : 'none' }};">
+                        <input 
+                            type="file" 
+                            id="logo_image" 
+                            name="logo_image" 
+                            accept="image/png"
+                            class="auth-form-input"
+                            onchange="previewLogoImage(this)"
+                        >
+                        <p class="mt-1 text-xs text-white/60">Formatos permitidos: PNG (máx. 2MB)</p>
+                    </div>
+
+                    {{-- Vista previa de nueva imagen PNG (cuando se selecciona un archivo) --}}
+                    <div id="new_logo_preview" class="mt-4" style="display: none;">
+                        <p class="text-sm text-white/70 mb-2">Vista previa de la nueva imagen:</p>
+                        <div class="flex items-center justify-center p-4 bg-white/10 rounded-lg min-h-[80px]">
+                            <img id="preview_logo_img" src="" alt="Preview" class="max-w-full max-h-32 object-contain">
+                        </div>
+                    </div>
+
+                    {{-- Vista previa de SVG --}}
+                    <div id="svg_logo_preview" class="mt-4 p-4 rounded-xl bg-white/5 border border-white/10" style="display: none;">
                         <p class="text-sm text-white/70 mb-2">Vista previa del logo:</p>
                         <div class="flex items-center justify-center p-4 bg-white/10 rounded-lg min-h-[80px]">
                             <div id="preview_logo_content" class="max-w-full max-h-32 flex items-center justify-center">
                             </div>
                         </div>
                     </div>
+
+                    <x-input-error class="mt-2" :messages="$errors->get('logo_url')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('logo_image')" />
                 </div>
 
                 {{-- URL del Sitio Web --}}
@@ -127,18 +180,79 @@
     </x-ui.container>
 
     <script>
-        // Vista previa del logo SVG
-        document.getElementById('logo_url').addEventListener('input', function(e) {
-            const preview = document.getElementById('logo_preview');
-            const previewContent = document.getElementById('preview_logo_content');
-            const logoSvg = e.target.value.trim();
+        function toggleLogoSource() {
+            const svgRadio = document.getElementById('logo_source_svg');
+            const pngRadio = document.getElementById('logo_source_png');
+            const svgField = document.getElementById('logo_svg_field');
+            const pngField = document.getElementById('logo_png_field');
+            const svgInput = document.getElementById('logo_url');
+            const pngInput = document.getElementById('logo_image');
+
+            if (svgRadio.checked) {
+                svgField.style.display = 'block';
+                pngField.style.display = 'none';
+                if (pngInput) {
+                    pngInput.value = ''; // Limpiar el input de archivo
+                    pngInput.removeAttribute('name'); // Remover name para que no se envíe
+                }
+                document.getElementById('new_logo_preview').style.display = 'none';
+                if (svgInput) {
+                    svgInput.removeAttribute('disabled');
+                    svgInput.setAttribute('name', 'logo_url'); // Asegurar que tenga el name
+                }
+            } else {
+                svgField.style.display = 'none';
+                pngField.style.display = 'block';
+                if (svgInput) {
+                    svgInput.value = ''; // Limpiar el input de SVG
+                    svgInput.setAttribute('disabled', 'disabled');
+                    svgInput.removeAttribute('name'); // Remover name para que no se envíe
+                }
+                document.getElementById('svg_logo_preview').style.display = 'none';
+                if (pngInput) {
+                    pngInput.setAttribute('name', 'logo_image'); // Asegurar que tenga el name
+                }
+            }
+        }
+
+        function previewLogoImage(input) {
+            const preview = document.getElementById('new_logo_preview');
+            const previewImg = document.getElementById('preview_logo_img');
             
-            if (logoSvg) {
-                previewContent.innerHTML = logoSvg;
-                preview.style.display = 'block';
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
             } else {
                 preview.style.display = 'none';
             }
+        }
+
+        // Vista previa del logo SVG
+        const svgInput = document.getElementById('logo_url');
+        if (svgInput) {
+            svgInput.addEventListener('input', function(e) {
+                const preview = document.getElementById('svg_logo_preview');
+                const previewContent = document.getElementById('preview_logo_content');
+                const logoSvg = e.target.value.trim();
+                
+                if (logoSvg) {
+                    previewContent.innerHTML = logoSvg;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+        }
+
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleLogoSource();
         });
     </script>
 </x-app-layout>

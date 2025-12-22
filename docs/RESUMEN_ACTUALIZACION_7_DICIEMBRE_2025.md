@@ -154,3 +154,5 @@ php artisan view:cache
 *Última actualización: 7 de Diciembre 2025*
 
 
+
+

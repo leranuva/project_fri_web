@@ -55,8 +55,22 @@
                         placeholder="Ej: TEMAS DE INTERÉS"
                         autofocus
                     />
-                    <p class="mt-1 text-xs text-white/60">Título principal que aparece en la parte superior de la sección de blog</p>
+                    <p class="mt-1 text-xs text-white/60">Título principal que aparece en la parte superior de la sección</p>
                     <x-input-error class="mt-2" :messages="$errors->get('title')" />
+                </div>
+
+                {{-- Subtítulo --}}
+                <div>
+                    <x-input-label for="subtitle" :value="__('Subtítulo de la Sección')" class="text-white/90 mb-2" />
+                    <textarea 
+                        id="subtitle" 
+                        name="subtitle" 
+                        class="auth-form-input" 
+                        rows="3"
+                        placeholder="Ej: Descubre artículos y noticias relevantes sobre importaciones y comercio internacional."
+                    >{{ old('subtitle', $blogSection->subtitle) }}</textarea>
+                    <p class="mt-1 text-xs text-white/60">Subtítulo que aparece debajo del título principal</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('subtitle')" />
                 </div>
 
                 {{-- Color del Título --}}
@@ -86,34 +100,50 @@
                     <x-input-error class="mt-2" :messages="$errors->get('title_color')" />
                 </div>
 
-                {{-- Texto del Botón --}}
+                {{-- Texto del Footer --}}
                 <div>
-                    <x-input-label for="button_text" :value="__('Texto del Botón')" class="text-white/90 mb-2" />
-                    <x-text-input 
-                        id="button_text" 
-                        name="button_text" 
-                        type="text" 
+                    <x-input-label for="footer_text" :value="__('Texto Debajo de los Cards')" class="text-white/90 mb-2" />
+                    <textarea 
+                        id="footer_text" 
+                        name="footer_text" 
                         class="auth-form-input" 
-                        :value="old('button_text', $blogSection->button_text)" 
-                        placeholder="Ver Blog"
-                    />
-                    <p class="mt-1 text-xs text-white/60">Texto que se mostrará en el botón al final de la sección (opcional)</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('button_text')" />
+                        rows="4"
+                        placeholder="Ej: Mantente informado con nuestros artículos sobre importaciones, regulaciones y consejos útiles."
+                    >{{ old('footer_text', $blogSection->footer_text) }}</textarea>
+                    <p class="mt-1 text-xs text-white/60">Texto que aparece debajo de los cards de temas de interés</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('footer_text')" />
                 </div>
 
-                {{-- Enlace del Botón --}}
-                <div>
-                    <x-input-label for="button_link" :value="__('Enlace del Botón')" class="text-white/90 mb-2" />
-                    <x-text-input 
-                        id="button_link" 
-                        name="button_link" 
-                        type="text" 
-                        class="auth-form-input" 
-                        :value="old('button_link', $blogSection->button_link)" 
-                        placeholder="# o https://ejemplo.com/blog"
-                    />
-                    <p class="mt-1 text-xs text-white/60">URL del enlace del botón (opcional)</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('button_link')" />
+                {{-- Botón --}}
+                <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 class="text-base font-semibold text-white mb-4">Botón Debajo de los Cards</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <x-input-label for="button_text" :value="__('Texto del Botón')" class="text-white/90 mb-2" />
+                            <x-text-input 
+                                id="button_text" 
+                                name="button_text" 
+                                type="text" 
+                                class="auth-form-input" 
+                                :value="old('button_text', $blogSection->button_text)" 
+                                placeholder="Ej: Ver Blog"
+                            />
+                            <x-input-error class="mt-2" :messages="$errors->get('button_text')" />
+                        </div>
+                        <div>
+                            <x-input-label for="button_link" :value="__('Enlace del Botón')" class="text-white/90 mb-2" />
+                            <x-text-input 
+                                id="button_link" 
+                                name="button_link" 
+                                type="text" 
+                                class="auth-form-input" 
+                                :value="old('button_link', $blogSection->button_link)" 
+                                placeholder="Ej: /blog o route('blog.index')"
+                            />
+                            <p class="mt-1 text-xs text-white/60">Puedes usar rutas de Laravel (ej: route('blog.index')) o URLs directas (ej: /blog)</p>
+                            <x-input-error class="mt-2" :messages="$errors->get('button_link')" />
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Estado Activo --}}

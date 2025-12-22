@@ -188,3 +188,5 @@ chmod -R 755 storage bootstrap/cache
 
 **Última actualización:** 9 de Diciembre 2025
 
+
+

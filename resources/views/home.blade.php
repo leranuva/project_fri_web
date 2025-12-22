@@ -392,15 +392,28 @@
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                             @forelse($stores as $store)
                                 <div class="store-logo">
-                                    @if($store->logo_url)
+                                    @if($store->logo_image || $store->logo_url)
                                         <a 
                                             href="{{ $store->website_url ?? '#' }}" 
                                             target="{{ $store->website_url ? '_blank' : '_self' }}"
                                             class="block w-full h-20 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 hover:bg-white/20 transition-colors p-2"
                                         >
-                                            <div class="max-w-full max-h-full flex items-center justify-center store-logo-svg">
-                                                {!! $store->logo_url !!}
-                                            </div>
+                                            @if($store->logo_image)
+                                                <img 
+                                                    src="{{ $store->logo_image }}" 
+                                                    alt="{{ $store->name }}" 
+                                                    class="max-w-full max-h-full object-contain"
+                                                    loading="lazy"
+                                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                                >
+                                                <div class="max-w-full max-h-full flex items-center justify-center store-logo-svg" style="display: none;">
+                                                    {!! $store->logo_url ?? '' !!}
+                                                </div>
+                                            @elseif($store->logo_url)
+                                                <div class="max-w-full max-h-full flex items-center justify-center store-logo-svg">
+                                                    {!! $store->logo_url !!}
+                                                </div>
+                                            @endif
                                         </a>
                                     @else
                                         <div class="w-full h-20 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
@@ -435,72 +448,117 @@
         @if($blogSection && $blogSection->is_active)
             <section class="py-12 sm:py-16 lg:py-20" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);">
                 <x-ui.container>
-                    <h2 
-                        class="text-3xl sm:text-4xl font-bold text-center mb-12"
-                        style="color: {{ $blogSection->title_color ?? '#ffffff' }};"
-                    >
-                        {{ $blogSection->title }}
-                    </h2>
+                    <div class="text-center mb-12">
+                        <h2 
+                            class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4"
+                            style="color: {{ $blogSection->title_color ?? '#ffffff' }};"
+                        >
+                            {{ $blogSection->title }}
+                        </h2>
+                        @if($blogSection->subtitle)
+                            <p class="text-lg sm:text-xl text-white/80 max-w-3xl mx-auto">
+                                {{ $blogSection->subtitle }}
+                            </p>
+                        @endif
+                    </div>
                     
                     <x-ui.grid :cols="1" :cols-sm="2" :cols-md="3" gap="default">
                         @forelse($blogPosts as $post)
                             <x-ui.card glassmorphism="true" class="blog-card cursor-pointer hover:scale-105 transition-transform">
-                                <div class="mb-4">
+                                <div class="mb-4 flex flex-col h-full">
                                     @if($post->featured_image_url)
-                                        <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="w-full h-48 object-cover rounded-lg mb-4">
+                                        <div class="w-full h-56 sm:h-64 overflow-hidden rounded-lg mb-4 bg-white/5 flex items-center justify-center">
+                                            <img 
+                                                src="{{ $post->featured_image_url }}" 
+                                                alt="{{ $post->title }}" 
+                                                class="w-full h-full object-contain rounded-lg"
+                                                loading="lazy"
+                                                onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\'%3E%3Crect fill=\'%23ffffff20\' width=\'400\' height=\'300\'/%3E%3Ctext fill=\'%23ffffff60\' font-family=\'Arial\' font-size=\'18\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3EImagen no disponible%3C/text%3E%3C/svg%3E';"
+                                            >
+                                        </div>
                                     @else
-                                        <div class="w-full h-48 bg-white/10 rounded-lg mb-4"></div>
+                                        <div class="w-full h-56 sm:h-64 bg-white/10 rounded-lg mb-4 flex items-center justify-center">
+                                            <svg class="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
                                     @endif
-                                    <h3 class="text-xl font-semibold mb-2 text-white">
-                                        {{ $post->title }}
-                                    </h3>
-                                    @if($post->excerpt)
-                                        <p class="text-white/80 text-sm mb-4">
-                                            {{ $post->excerpt }}
-                                        </p>
-                                    @endif
-                                    @if($post->link)
-                                        <a href="{{ $post->link }}" target="_blank" class="auth-form-link text-sm font-semibold">
-                                            Leer más →
-                                        </a>
-                                    @else
-                                        <a href="#" class="auth-form-link text-sm font-semibold">
-                                            Leer más →
-                                        </a>
-                                    @endif
+                                    <div class="flex-1 flex flex-col">
+                                        <h3 class="text-xl font-semibold mb-2 text-white line-clamp-2">
+                                            {{ $post->title }}
+                                        </h3>
+                                        @if($post->excerpt)
+                                            <p class="text-white/80 text-sm mb-4 line-clamp-3 flex-1">
+                                                {{ $post->excerpt }}
+                                            </p>
+                                        @endif
+                                        <div class="mt-auto">
+                                            @if($post->link)
+                                                <a href="{{ $post->link }}" target="_blank" class="auth-form-link text-sm font-semibold inline-flex items-center gap-1">
+                                                    Leer más 
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </a>
+                                            @else
+                                                <a href="#" class="auth-form-link text-sm font-semibold inline-flex items-center gap-1">
+                                                    Leer más 
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                             </x-ui.card>
                         @empty
                             {{-- Fallback si no hay artículos --}}
                             @for($i = 1; $i <= 3; $i++)
                                 <x-ui.card glassmorphism="true" class="blog-card cursor-pointer hover:scale-105 transition-transform">
-                                    <div class="mb-4">
-                                        <div class="w-full h-48 bg-white/10 rounded-lg mb-4"></div>
-                                        <h3 class="text-xl font-semibold mb-2 text-white">
-                                            Título del Artículo {{ $i }}
-                                        </h3>
-                                        <p class="text-white/80 text-sm mb-4">
-                                            Descripción breve del artículo que será de interés para los usuarios...
-                                        </p>
-                                        <a href="#" class="auth-form-link text-sm font-semibold">
-                                            Leer más →
-                                        </a>
+                                    <div class="mb-4 flex flex-col h-full">
+                                        <div class="w-full h-56 sm:h-64 bg-white/10 rounded-lg mb-4 flex items-center justify-center">
+                                            <svg class="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1 flex flex-col">
+                                            <h3 class="text-xl font-semibold mb-2 text-white line-clamp-2">
+                                                Título del Artículo {{ $i }}
+                                            </h3>
+                                            <p class="text-white/80 text-sm mb-4 line-clamp-3 flex-1">
+                                                Descripción breve del artículo que será de interés para los usuarios...
+                                            </p>
+                                            <div class="mt-auto">
+                                                <a href="#" class="auth-form-link text-sm font-semibold inline-flex items-center gap-1">
+                                                    Leer más 
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </x-ui.card>
                             @endfor
                         @endforelse
                     </x-ui.grid>
 
-                    @if($blogSection->button_text && $blogSection->button_link)
-                        <div class="text-center mt-12">
+                    <div class="text-center mt-12">
+                        @if($blogSection->footer_text)
+                            <p class="text-white/90 text-lg mb-6">
+                                {!! nl2br(e($blogSection->footer_text)) !!}
+                            </p>
+                        @endif
+                        @if($blogSection->button_text && $blogSection->button_link)
                             <a 
                                 href="{{ $blogSection->button_link }}"
                                 class="glass-button glass-button-lg"
                             >
                                 {{ $blogSection->button_text }}
                             </a>
-                        </div>
-                    @endif
+                        @endif
+                    </div>
                 </x-ui.container>
             </section>
         @endif

@@ -122,3 +122,5 @@
    - Verificar efecto hover
    - Probar con diferentes tamaños de logos
 
+
+

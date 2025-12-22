@@ -35,7 +35,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('admin.blog-posts.update', $blogPost) }}" class="space-y-6">
+            <form method="POST" action="{{ route('admin.blog-posts.update', $blogPost) }}" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 @method('PATCH')
 
@@ -84,27 +84,97 @@
                     <x-input-error class="mt-2" :messages="$errors->get('content')" />
                 </div>
 
-                {{-- URL de la Imagen Destacada --}}
+                {{-- Imagen Destacada --}}
                 <div>
-                    <x-input-label for="featured_image_url" :value="__('URL de la Imagen Destacada')" class="text-white/90 mb-2" />
-                    <x-text-input 
-                        id="featured_image_url" 
-                        name="featured_image_url" 
-                        type="url" 
-                        class="auth-form-input" 
-                        :value="old('featured_image_url', $blogPost->featured_image_url)" 
-                        placeholder="https://ejemplo.com/imagen.jpg"
-                    />
-                    <p class="mt-1 text-xs text-white/60">URL completa de la imagen destacada del artículo (opcional)</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('featured_image_url')" />
+                    <x-input-label :value="__('Imagen Destacada')" class="text-white/90 mb-2" />
                     
-                    {{-- Vista previa de la imagen --}}
-                    <div id="image_preview" class="mt-4 p-4 rounded-xl bg-white/5 border border-white/10" style="display: {{ $blogPost->featured_image_url ? 'block' : 'none' }};">
-                        <p class="text-sm text-white/70 mb-2">Vista previa de la imagen:</p>
-                        <div class="flex items-center justify-center p-4 bg-white/10 rounded-lg">
-                            <img id="preview_image_content" src="{{ $blogPost->featured_image_url ?? '' }}" alt="Preview" class="max-w-full max-h-48 object-contain rounded">
-                        </div>
+                    {{-- Selector de método: Subir archivo o URL --}}
+                    <div class="mb-4 flex gap-4">
+                        <label class="auth-form-checkbox cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="image_source" 
+                                value="url" 
+                                id="image_source_url"
+                                {{ old('image_source', str_starts_with($blogPost->featured_image_url ?? '', 'http') ? 'url' : 'file') === 'url' ? 'checked' : '' }}
+                                onchange="toggleImageSource()"
+                            >
+                            <span class="text-white/90">Usar URL</span>
+                        </label>
+                        <label class="auth-form-checkbox cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="image_source" 
+                                value="file" 
+                                id="image_source_file"
+                                {{ old('image_source', str_starts_with($blogPost->featured_image_url ?? '', 'http') ? 'url' : 'file') === 'file' ? 'checked' : '' }}
+                                onchange="toggleImageSource()"
+                            >
+                            <span class="text-white/90">Subir desde PC</span>
+                        </label>
                     </div>
+
+                    {{-- Campo URL --}}
+                    <div id="image_url_field" style="display: {{ old('image_source', str_starts_with($blogPost->featured_image_url ?? '', 'http') ? 'url' : 'file') === 'url' ? 'block' : 'none' }};">
+                        <x-text-input 
+                            id="featured_image_url" 
+                            name="featured_image_url" 
+                            type="url" 
+                            class="auth-form-input" 
+                            :value="old('featured_image_url', str_starts_with($blogPost->featured_image_url ?? '', 'http') ? $blogPost->featured_image_url : '')" 
+                            placeholder="https://ejemplo.com/imagen.jpg"
+                        />
+                        <p class="mt-1 text-xs text-white/60">Ingresa la URL completa de la imagen</p>
+                    </div>
+
+                    {{-- Campo File Upload --}}
+                    <div id="image_file_field" style="display: {{ old('image_source', str_starts_with($blogPost->featured_image_url ?? '', 'http') ? 'url' : 'file') === 'file' ? 'block' : 'none' }};">
+                        <input 
+                            type="file" 
+                            id="featured_image_file" 
+                            name="featured_image_file" 
+                            accept="image/*"
+                            class="auth-form-input"
+                            onchange="previewImage(this)"
+                        >
+                        <p class="mt-1 text-xs text-white/60">Formatos permitidos: JPG, PNG, GIF, WEBP (máx. 5MB)</p>
+                    </div>
+
+                    {{-- Vista previa de la imagen actual --}}
+                    @if($blogPost->featured_image_url)
+                        <div class="mt-4">
+                            <p class="text-sm text-white/70 mb-2">Imagen actual:</p>
+                            @php
+                                $imageUrl = $blogPost->featured_image_url;
+                                if (!str_starts_with($imageUrl, 'http')) {
+                                    // Si es una ruta local, construir la URL completa
+                                    if (str_starts_with($imageUrl, 'storage/')) {
+                                        $imageUrl = asset($imageUrl);
+                                    } elseif (str_starts_with($imageUrl, '/storage/')) {
+                                        $imageUrl = asset($imageUrl);
+                                    } else {
+                                        $imageUrl = asset('storage/' . $imageUrl);
+                                    }
+                                }
+                            @endphp
+                            <img 
+                                src="{{ $imageUrl }}" 
+                                alt="{{ $blogPost->title }}" 
+                                id="current_image_preview"
+                                class="w-full max-w-md h-48 object-cover rounded-lg border border-white/20"
+                                onerror="this.src='{{ $blogPost->featured_image_url }}'"
+                            >
+                        </div>
+                    @endif
+
+                    {{-- Vista previa de nueva imagen (cuando se selecciona un archivo) --}}
+                    <div id="new_image_preview" class="mt-4" style="display: none;">
+                        <p class="text-sm text-white/70 mb-2">Vista previa de la nueva imagen:</p>
+                        <img id="preview_img" src="" alt="Preview" class="w-full max-w-md h-48 object-cover rounded-lg border border-white/20">
+                    </div>
+
+                    <x-input-error class="mt-2" :messages="$errors->get('featured_image_url')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('featured_image_file')" />
                 </div>
 
                 {{-- Enlace del Artículo --}}
@@ -184,19 +254,56 @@
     </x-ui.container>
 
     <script>
-        // Vista previa de la imagen
-        document.getElementById('featured_image_url').addEventListener('input', function(e) {
-            const preview = document.getElementById('image_preview');
-            const previewContent = document.getElementById('preview_image_content');
-            const imageUrl = e.target.value.trim();
+        function toggleImageSource() {
+            const urlRadio = document.getElementById('image_source_url');
+            const fileRadio = document.getElementById('image_source_file');
+            const urlField = document.getElementById('image_url_field');
+            const fileField = document.getElementById('image_file_field');
+            const urlInput = document.getElementById('featured_image_url');
+            const fileInput = document.getElementById('featured_image_file');
+
+            if (urlRadio.checked) {
+                urlField.style.display = 'block';
+                fileField.style.display = 'none';
+                if (fileInput) {
+                    fileInput.value = ''; // Limpiar el input de archivo
+                }
+                document.getElementById('new_image_preview').style.display = 'none';
+                if (urlInput) {
+                    urlInput.removeAttribute('disabled');
+                }
+            } else {
+                urlField.style.display = 'none';
+                fileField.style.display = 'block';
+                if (urlInput) {
+                    urlInput.value = ''; // Limpiar el input de URL
+                    urlInput.setAttribute('disabled', 'disabled');
+                }
+            }
+        }
+
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleImageSource();
+        });
+
+        function previewImage(input) {
+            const preview = document.getElementById('new_image_preview');
+            const previewImg = document.getElementById('preview_img');
             
-            if (imageUrl) {
-                previewContent.src = imageUrl;
-                preview.style.display = 'block';
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
             } else {
                 preview.style.display = 'none';
             }
-        });
+        }
     </script>
 </x-app-layout>
 

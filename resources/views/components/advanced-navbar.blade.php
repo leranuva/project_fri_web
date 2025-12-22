@@ -41,7 +41,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="https://flatrateimports.com/" target="_blank" class="nav-link">
+                    <a href="https://flatrateimports.store/" target="_blank" class="nav-link">
                         <svg class="nav-icon" viewBox="0 0 24 24">
                             <path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z"></path>
                         </svg>
@@ -195,7 +195,7 @@
             </li>
             <li class="mobile-menu-item">
                 <a 
-                    href="https://flatrateimports.com/" 
+                    href="https://flatrateimports.store/" 
                     target="_blank"
                     class="mobile-menu-link"
                     @click="mobileMenuOpen = false"

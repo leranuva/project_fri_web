@@ -115,3 +115,5 @@ Optimizar la sección de costos del proyecto para pantallas pequeñas y mejorar 
 - `ARCHIVOS_CAMBIADOS_9_DICIEMBRE_2025.md` - Detalle de cambios
 - `COMANDOS_SSH_HOSTINGER_9_DICIEMBRE_2025.md` - Comandos de despliegue
 
+
+

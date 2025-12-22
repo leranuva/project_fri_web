@@ -96,3 +96,5 @@ Si algo falla, restaurar:
 - `resources/views/home.blade.php`
 - `database/seeders/StoreSeeder.php`
 
+
+

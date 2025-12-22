@@ -129,3 +129,5 @@ En tu máquina local, verifica que los archivos tienen el mismo contenido.
 - [ ] Sin errores en consola del navegador
 - [ ] Estilos CSS aplicados correctamente
 
+
+

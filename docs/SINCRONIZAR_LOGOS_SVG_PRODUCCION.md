@@ -224,3 +224,5 @@ Los logos SVG pueden ser muy largos. Asegúrate de:
 
 ¿Quieres que te ayude a generar el script SQL o el código para tinker con tus logos específicos?
 
+
+

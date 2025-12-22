@@ -69,3 +69,5 @@ if ($notFound > 0) {
 
 echo "\n🔄 Limpia la caché con: php artisan view:clear && php artisan view:cache\n";
 
+
+

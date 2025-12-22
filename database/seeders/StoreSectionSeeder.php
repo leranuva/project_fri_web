@@ -19,7 +19,7 @@ class StoreSectionSeeder extends Seeder
                 'subtitle' => '¡Y muchas más!',
                 'title_color' => '#ffffff',
                 'subtitle_color' => 'rgba(255, 255, 255, 0.8)',
-                'footer_link' => 'https://flatrateimports.com/',
+                'footer_link' => 'https://flatrateimports.store/',
                 'footer_link_text' => 'Revisar todas las tiendas',
                 'is_active' => true,
             ]
