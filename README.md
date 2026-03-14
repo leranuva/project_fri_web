@@ -436,7 +436,7 @@ Este proyecto es de uso exclusivo para Flat Rate Imports.
 
 ## Autor
 
-**Ramiro Nuva** — Full-Stack Developer  
+**Ramiro Nunez** — Full-Stack Developer  
 GitHub: [github.com/leranuva](https://github.com/leranuva)
 
 ---
