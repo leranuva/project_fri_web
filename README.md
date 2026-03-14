@@ -10,9 +10,16 @@
 
 ---
 
+## Demo en producción
+
+https://flatrateimports.com
+
+---
+
 ## Tabla de contenidos
 
 - [Descripción](#descripción)
+- [Screenshots](#screenshots)
 - [Características principales](#características-principales)
 - [Tecnologías](#tecnologías)
 - [Requisitos](#requisitos)
@@ -31,6 +38,24 @@
 ## Descripción
 
 **Flat Rate Imports** es una aplicación web desarrollada con Laravel que permite a los usuarios cotizar el costo de importar productos desde Estados Unidos a Ecuador. Incluye un cotizador inteligente con cálculos automáticos de impuestos (Ad-Valorem, FODINFA, IVA), múltiples métodos de envío (marítimo, aéreo, aéreo express, Courier 4x4), tracking de paquetes en tiempo real y un panel de administración completo para gestionar todo el contenido del sitio.
+
+El sistema funciona como **motor de generación de leads y tráfico SEO** para el negocio.
+
+---
+
+## Screenshots
+
+### Página principal
+
+![Home](docs/screenshots/home.png)
+
+### Cotizador de importaciones
+
+![Quote](docs/screenshots/quote.png)
+
+### Panel de administración
+
+![Admin](docs/screenshots/admin.png)
 
 ---
 
@@ -406,6 +431,13 @@ php artisan blog:generate
 ## Licencia
 
 Este proyecto es de uso exclusivo para Flat Rate Imports.
+
+---
+
+## Autor
+
+**Ramiro Nuva** — Full-Stack Developer  
+GitHub: [github.com/leranuva](https://github.com/leranuva)
 
 ---
 
