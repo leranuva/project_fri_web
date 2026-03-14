@@ -1,0 +1,2 @@
+# Ignorar dumps SQL (pueden ser muy grandes)
+*.sql

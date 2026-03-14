@@ -1,0 +1,287 @@
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-lg sm:text-xl text-white leading-tight">
+            {{ __('Configuración de la Sección de Blog') }}
+        </h2>
+    </x-slot>
+
+    <x-ui.container>
+        {{-- Mensajes de éxito/error --}}
+        @if(session('success'))
+            <div class="mb-6 p-4 rounded-xl bg-green-500/20 border border-green-500/30 backdrop-blur-sm">
+                <div class="flex items-center gap-2 text-green-300">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span>{{ session('success') }}</span>
+                </div>
+            </div>
+        @endif
+
+        <x-ui.card glassmorphism="true" padding="lg" class="mb-6">
+            <div class="mb-4 sm:mb-6">
+                <a href="{{ route('admin.blog-posts.index') }}" class="inline-flex items-center text-white/80 hover:text-white transition-colors mb-3 sm:mb-4 text-sm sm:text-base">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Volver a Artículos
+                </a>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
+                            Configuración de la Sección de Blog
+                        </h1>
+                        <p class="text-xs sm:text-sm md:text-base text-white/80">
+                            Edita el título y configuración de la sección "Temas de Interés"
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('admin.blog-sections.update', $blogSection) }}" class="space-y-6">
+                @csrf
+                @method('PATCH')
+
+                {{-- Título --}}
+                <div>
+                    <x-input-label for="title" :value="__('Título de la Sección')" class="text-white/90 mb-2" />
+                    <x-text-input 
+                        id="title" 
+                        name="title" 
+                        type="text" 
+                        class="auth-form-input" 
+                        :value="old('title', $blogSection->title)" 
+                        required 
+                        placeholder="Ej: TEMAS DE INTERÉS"
+                        autofocus
+                    />
+                    <p class="mt-1 text-xs text-white/60">Título principal que aparece en la parte superior de la sección</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('title')" />
+                </div>
+
+                {{-- Subtítulo --}}
+                <div>
+                    <x-input-label for="subtitle" :value="__('Subtítulo de la Sección')" class="text-white/90 mb-2" />
+                    <textarea 
+                        id="subtitle" 
+                        name="subtitle" 
+                        class="auth-form-input" 
+                        rows="3"
+                        placeholder="Ej: Descubre artículos y noticias relevantes sobre importaciones y comercio internacional."
+                    >{{ old('subtitle', $blogSection->subtitle) }}</textarea>
+                    <p class="mt-1 text-xs text-white/60">Subtítulo que aparece debajo del título principal</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('subtitle')" />
+                </div>
+
+                {{-- Color del Título --}}
+                <div>
+                    <x-input-label for="title_color" :value="__('Color del Título')" class="text-white/90 mb-2" />
+                    <div class="flex items-center gap-2 sm:gap-4">
+                        <input 
+                            type="color" 
+                            id="title_color" 
+                            name="title_color" 
+                            value="{{ old('title_color', $blogSection->title_color ?? '#ffffff') }}"
+                            class="w-16 h-10 sm:w-20 sm:h-12 rounded-lg border-2 border-white/30 cursor-pointer flex-shrink-0"
+                            style="background: transparent;"
+                            onchange="document.getElementById('title_color_hex').value = this.value"
+                        >
+                        <x-text-input 
+                            type="text" 
+                            id="title_color_hex" 
+                            class="auth-form-input flex-1 min-w-0" 
+                            value="{{ old('title_color', $blogSection->title_color ?? '#ffffff') }}"
+                            placeholder="#ffffff"
+                            pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                            onchange="document.getElementById('title_color').value = this.value"
+                        />
+                    </div>
+                    <p class="mt-1 text-xs text-white/60">Selecciona o ingresa un color hexadecimal para el título</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('title_color')" />
+                </div>
+
+                {{-- Texto del Footer --}}
+                <div>
+                    <x-input-label for="footer_text" :value="__('Texto Debajo de los Cards')" class="text-white/90 mb-2" />
+                    <textarea 
+                        id="footer_text" 
+                        name="footer_text" 
+                        class="auth-form-input" 
+                        rows="4"
+                        placeholder="Ej: Mantente informado con nuestros artículos sobre importaciones, regulaciones y consejos útiles."
+                    >{{ old('footer_text', $blogSection->footer_text) }}</textarea>
+                    <p class="mt-1 text-xs text-white/60">Texto que aparece debajo de los cards de temas de interés</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('footer_text')" />
+                </div>
+
+                {{-- CTA de los posts (botón "Ir a la tienda" en cada artículo) --}}
+                <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 class="text-base font-semibold text-white mb-2">Botón CTA en los Artículos</h3>
+                    <p class="text-sm text-white/70 mb-4">Configura el botón "Ir a la tienda" que aparece en cada artículo del blog.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <x-input-label for="cta_button_text" :value="__('Texto del botón')" class="text-white/90 mb-2" />
+                            <x-text-input 
+                                id="cta_button_text" 
+                                name="cta_button_text" 
+                                type="text" 
+                                class="auth-form-input" 
+                                :value="old('cta_button_text', $blogSection->cta_button_text ?? 'Ir a la tienda')" 
+                                placeholder="Ir a la tienda"
+                            />
+                            <p class="mt-1 text-xs text-white/60">Texto por defecto cuando el artículo no tiene uno personalizado</p>
+                            <x-input-error class="mt-2" :messages="$errors->get('cta_button_text')" />
+                        </div>
+                        <div class="auth-form-checkbox">
+                            <input 
+                                type="checkbox" 
+                                id="cta_button_visible" 
+                                name="cta_button_visible" 
+                                value="1"
+                                {{ old('cta_button_visible', $blogSection->cta_button_visible ?? true) ? 'checked' : '' }}
+                            >
+                            <label for="cta_button_visible" class="text-white/90">
+                                Mostrar botón CTA en los artículos
+                            </label>
+                        </div>
+                        <div class="auth-form-checkbox">
+                            <input 
+                                type="checkbox" 
+                                id="cta_button_animated" 
+                                name="cta_button_animated" 
+                                value="1"
+                                {{ old('cta_button_animated', $blogSection->cta_button_animated ?? true) ? 'checked' : '' }}
+                            >
+                            <label for="cta_button_animated" class="text-white/90">
+                                Activar animación del botón (pulso cada 2 segundos)
+                            </label>
+                        </div>
+                        <div>
+                            <x-input-label for="cta_button_url_base" :value="__('URL por defecto')" class="text-white/90 mb-2" />
+                            <x-text-input 
+                                type="url" 
+                                id="cta_button_url_base" 
+                                name="cta_button_url_base"
+                                class="auth-form-input" 
+                                value="{{ old('cta_button_url_base', $blogSection->cta_button_url_base ?? '') }}"
+                                placeholder="https://flatrateimports.store"
+                            />
+                            <p class="mt-1 text-xs text-white/60">Cuando el artículo no tiene enlace personalizado, se usa esta URL</p>
+                            <x-input-error class="mt-2" :messages="$errors->get('cta_button_url_base')" />
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                            <div>
+                                <x-input-label for="cta_button_bg_color" :value="__('Color de fondo')" class="text-white/90 mb-2" />
+                                <x-text-input 
+                                    type="text" 
+                                    id="cta_button_bg_color" 
+                                    name="cta_button_bg_color"
+                                    class="auth-form-input" 
+                                    value="{{ old('cta_button_bg_color', $blogSection->cta_button_bg_color ?? 'rgba(34, 197, 94, 0.2)') }}"
+                                    placeholder="rgba(34, 197, 94, 0.2)"
+                                />
+                            </div>
+                            <div>
+                                <x-input-label for="cta_button_border_color" :value="__('Color del borde')" class="text-white/90 mb-2" />
+                                <x-text-input 
+                                    type="text" 
+                                    id="cta_button_border_color" 
+                                    name="cta_button_border_color"
+                                    class="auth-form-input" 
+                                    value="{{ old('cta_button_border_color', $blogSection->cta_button_border_color ?? 'rgba(34, 197, 94, 0.4)') }}"
+                                    placeholder="rgba(34, 197, 94, 0.4)"
+                                />
+                            </div>
+                            <div>
+                                <x-input-label for="cta_button_text_color" :value="__('Color del texto')" class="text-white/90 mb-2" />
+                                <div class="flex items-center gap-2">
+                                    <input 
+                                        type="color" 
+                                        id="cta_button_text_color_picker" 
+                                        value="{{ old('cta_button_text_color', $blogSection->cta_button_text_color ?? '#86efac') }}"
+                                        class="w-12 h-10 rounded-lg border-2 border-white/30 cursor-pointer flex-shrink-0"
+                                        style="background: transparent;"
+                                        onchange="document.getElementById('cta_button_text_color').value = this.value"
+                                    >
+                                    <x-text-input 
+                                        type="text" 
+                                        id="cta_button_text_color" 
+                                        name="cta_button_text_color"
+                                        class="auth-form-input flex-1 min-w-0" 
+                                        value="{{ old('cta_button_text_color', $blogSection->cta_button_text_color ?? '#86efac') }}"
+                                        placeholder="#86efac"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Botón --}}
+                <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 class="text-base font-semibold text-white mb-4">Botón Debajo de los Cards</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <x-input-label for="button_text" :value="__('Texto del Botón')" class="text-white/90 mb-2" />
+                            <x-text-input 
+                                id="button_text" 
+                                name="button_text" 
+                                type="text" 
+                                class="auth-form-input" 
+                                :value="old('button_text', $blogSection->button_text)" 
+                                placeholder="Ej: Ver Blog"
+                            />
+                            <x-input-error class="mt-2" :messages="$errors->get('button_text')" />
+                        </div>
+                        <div>
+                            <x-input-label for="button_link" :value="__('Enlace del Botón')" class="text-white/90 mb-2" />
+                            <x-text-input 
+                                id="button_link" 
+                                name="button_link" 
+                                type="text" 
+                                class="auth-form-input" 
+                                :value="old('button_link', $blogSection->button_link)" 
+                                placeholder="Ej: /blog o route('blog.index')"
+                            />
+                            <p class="mt-1 text-xs text-white/60">Puedes usar rutas de Laravel (ej: route('blog.index')) o URLs directas (ej: /blog)</p>
+                            <x-input-error class="mt-2" :messages="$errors->get('button_link')" />
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Estado Activo --}}
+                <div class="auth-form-checkbox">
+                    <input 
+                        type="checkbox" 
+                        id="is_active" 
+                        name="is_active" 
+                        value="1"
+                        {{ old('is_active', $blogSection->is_active) ? 'checked' : '' }}
+                    >
+                    <label for="is_active" class="text-white/90">
+                        Sección activa (se mostrará en la página de inicio)
+                    </label>
+                </div>
+                <x-input-error class="mt-2" :messages="$errors->get('is_active')" />
+
+                {{-- Botones de Acción --}}
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-4 border-t border-white/10">
+                    <button type="submit" class="glass-button glass-button-sm sm:glass-button w-full sm:w-auto flex items-center justify-center min-w-0">
+                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="text-xs sm:text-sm md:text-base truncate">Guardar Cambios</span>
+                    </button>
+                    <a href="{{ route('admin.blog-posts.index') }}" class="glass-button glass-button-sm sm:glass-button w-full sm:w-auto flex items-center justify-center min-w-0" style="background: rgba(255, 255, 255, 0.1);">
+                        <span class="text-xs sm:text-sm md:text-base truncate">Cancelar</span>
+                    </a>
+                </div>
+            </form>
+        </x-ui.card>
+    </x-ui.container>
+</x-app-layout>
+
+
+
+
+
