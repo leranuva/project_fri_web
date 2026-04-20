@@ -46,6 +46,7 @@ class QuoteCalculator
 
         $taxResult = $this->taxCalculator->calculate(
             $productCost,
+            $shippingCost,
             $adValorem,
             $arancelEspecifico,
             $data->shippingMethod,
@@ -57,7 +58,6 @@ class QuoteCalculator
 
         // 4. Total
         $totalCotizacion = $this->totalCalculator->calculate(
-            $productCost,
             $shippingCost,
             $taxResult['totalImpuestos'],
             $seguroCIF

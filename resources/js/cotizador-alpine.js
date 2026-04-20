@@ -72,7 +72,7 @@ function calculateQuote(data) {
     const costPerPound = calculateCostPerPound(shippingMethod, totalWeight);
     const shippingCost = costPerPound * totalWeight;
     
-    // Calcular impuestos
+    // Calcular impuestos (base = producto + envío, igual que el backend)
     const adValorem = product.adValorem;
     const arancelEspecifico = product.arancelEspecifico;
     
@@ -82,26 +82,26 @@ function calculateQuote(data) {
     
     const fodinfa = 0.005;
     const iva = 0.12;
+    const baseImponible = productCost + shippingCost;
     
     // Lógica especial para aereo
     if (shippingMethod === 'aereo' && totalWeight >= 1 && totalWeight <= 8) {
         // Sin impuestos
     } else if (shippingMethod === 'aereo' && productCost <= 400) {
-        impuestoAdvalorem = productCost * adValorem;
-        impuestoFodinfa = productCost * fodinfa;
-        impuestoIva = (productCost + impuestoAdvalorem + impuestoFodinfa) * iva;
+        impuestoAdvalorem = baseImponible * adValorem;
+        impuestoFodinfa = baseImponible * fodinfa;
+        impuestoIva = (baseImponible + impuestoAdvalorem + impuestoFodinfa) * iva;
     } else {
-        impuestoAdvalorem = productCost * adValorem;
-        impuestoFodinfa = productCost * fodinfa;
-        impuestoIva = (productCost + impuestoAdvalorem + impuestoFodinfa) * iva;
+        impuestoAdvalorem = baseImponible * adValorem;
+        impuestoFodinfa = baseImponible * fodinfa;
+        impuestoIva = (baseImponible + impuestoAdvalorem + impuestoFodinfa) * iva;
     }
     
     const totalImpuestos = impuestoAdvalorem + impuestoFodinfa + impuestoIva + arancelEspecifico;
     
     // Seguro CIF
     const seguroCIF = (productCost + shippingCost) * 0.025;
-    const totalCotizacion = productCost + shippingCost + totalImpuestos;
-    const totalConSeguro = totalCotizacion + seguroCIF;
+    const totalCotizacion = shippingCost + totalImpuestos + seguroCIF;
     
     return {
         product: data.product,
@@ -115,7 +115,7 @@ function calculateQuote(data) {
         arancelEspecifico,
         totalImpuestos,
         seguroCIF,
-        totalCotizacion: totalConSeguro,
+        totalCotizacion,
         adValorem,
         fodinfa,
         iva,

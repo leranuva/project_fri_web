@@ -23,6 +23,7 @@ class TaxCalculatorTest extends TestCase
     {
         $result = $this->calculator->calculate(
             productCost: 100,
+            shippingCost: 0,
             adValorem: 0.15,
             arancelEspecifico: 0,
             shippingMethod: 'maritimo',
@@ -40,6 +41,7 @@ class TaxCalculatorTest extends TestCase
     {
         $result = $this->calculator->calculate(
             productCost: 100,
+            shippingCost: 25,
             adValorem: 0.15,
             arancelEspecifico: 0,
             shippingMethod: 'courier4x4',
@@ -57,6 +59,7 @@ class TaxCalculatorTest extends TestCase
     {
         $result = $this->calculator->calculate(
             productCost: 500,
+            shippingCost: 0,
             adValorem: 0.05,
             arancelEspecifico: 73.11,
             shippingMethod: 'maritimo',
@@ -84,6 +87,7 @@ class TaxCalculatorTest extends TestCase
 
         $result = $this->calculator->calculate(
             productCost: 100,
+            shippingCost: 0,
             adValorem: 0.1,
             arancelEspecifico: 0,
             shippingMethod: 'maritimo',
@@ -92,5 +96,23 @@ class TaxCalculatorTest extends TestCase
 
         $this->assertSame(0.005, $result['fodinfa']);
         $this->assertSame(0.12, $result['iva']);
+    }
+
+    public function test_impuestos_porcentuales_usan_base_producto_mas_envio(): void
+    {
+        $result = $this->calculator->calculate(
+            productCost: 100,
+            shippingCost: 50,
+            adValorem: 0.15,
+            arancelEspecifico: 0,
+            shippingMethod: 'maritimo',
+            isCourier4x4Valid: false
+        );
+
+        $base = 150;
+        $this->assertEqualsWithDelta(22.5, $result['impuestoAdvalorem'], 0.00001);
+        $this->assertEqualsWithDelta(0.75, $result['impuestoFodinfa'], 0.00001);
+        $expectedIva = ($base + $result['impuestoAdvalorem'] + $result['impuestoFodinfa']) * 0.12;
+        $this->assertEqualsWithDelta($expectedIva, $result['impuestoIva'], 0.00001);
     }
 }

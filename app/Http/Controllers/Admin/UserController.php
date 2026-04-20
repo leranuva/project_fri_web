@@ -12,7 +12,9 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = \App\Models\User::latest()->paginate(15);
+        $users = \App\Models\User::query()
+            ->orderBy('id')
+            ->paginate(15);
         return view('admin.users.index', compact('users'));
     }
 

@@ -5,14 +5,14 @@ namespace App\Services\Cotizador;
 class TotalCalculator
 {
     /**
-     * Calcula el total final de la cotización (productCost + shipping + impuestos + seguro CIF)
+     * Total mostrado al cliente: envío + impuestos + seguro CIF.
+     * El valor del producto no se suma aquí (solo alimenta el cálculo de impuestos y del seguro).
      */
     public function calculate(
-        float $productCost,
         float $shippingCost,
         float $totalImpuestos,
         float $seguroCIF
     ): float {
-        return $productCost + $shippingCost + $totalImpuestos + $seguroCIF;
+        return $shippingCost + $totalImpuestos + $seguroCIF;
     }
 }

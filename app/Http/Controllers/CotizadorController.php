@@ -139,7 +139,7 @@ class CotizadorController extends Controller
             }
 
             // Cache de cotización (misma entrada = mismo resultado)
-            $cacheKey = 'cotizador.quote.' . md5(json_encode($data));
+            $cacheKey = 'cotizador.quote.v3.' . md5(json_encode($data));
             $quote = Cache::remember($cacheKey, 3600, fn () => CotizadorHelper::calculateQuote($data));
 
             // Formatear nombre del producto
