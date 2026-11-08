@@ -269,11 +269,11 @@ flat_rate_imports/
 - **Impuestos** — FODINFA, IVA, seguro CIF
 - **Sliders** — Imágenes, videos (incl. YouTube)
 - **Proceso, beneficios, alertas** — Contenido del home
-- **Tiendas y logos** — Tiendas asociadas
+- **Tiendas y logos** — Tiendas asociadas y gestión del logo de marca con previsualización y versiones recuperables
 - **Blog** — Artículos y configuración de sección
 - **Footer** — Enlaces y configuración
 - **Cotizador** — Títulos, colores, botón "Comprar en tienda"
-- **Temas** — Personalización visual global
+- **Temas** — Paletas, borradores, vista previa con avisos de contraste e historial de publicación
 - **Páginas SEO** — Rutas dinámicas tipo `/importar-iphone-desde-amazon-a-ecuador`
 - **Leads** — Listado y scoring
 
@@ -393,6 +393,7 @@ php artisan view:clear
 
 | Documento | Descripción |
 |-----------|-------------|
+| [Actualización de portada, cotizador y marca](docs/ACTUALIZACION_PORTADA_Y_COTIZADOR.md) | Cambios, gestión de logos y temas, y verificación |
 | [ANALISIS_PROYECTO.md](docs/ANALISIS_PROYECTO.md) | Análisis técnico del proyecto |
 | [BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md) | Esquema, migraciones y sincronización |
 | [DEPLOYMENT_HOSTINGER.md](docs/DEPLOYMENT_HOSTINGER.md) | Guía de despliegue en Hostinger |

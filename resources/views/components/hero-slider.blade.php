@@ -103,8 +103,7 @@
     x-init="startAutoPlay()"
     @mouseenter="stopAutoPlay()"
     @mouseleave="startAutoPlay()"
-    class="hero-slider relative w-screen overflow-hidden"
-    style="height: 70vh; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);"
+    class="hero-slider relative overflow-hidden"
     @keydown.left.window="prevSlide()"
     @keydown.right.window="nextSlide()"
 >
@@ -159,11 +158,11 @@
                 <div class="relative z-[1] h-full flex items-center">
                     <x-ui.container>
                         <div class="text-center text-white max-w-4xl mx-auto px-4">
-                            <h1 
+                            <h2
                                 x-text="slide.title"
                                 :style="'color: ' + (slide.titleColor || '#ffffff')"
                                 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight drop-shadow-lg"
-                            ></h1>
+                            ></h2>
                             <p 
                                 x-text="slide.subtitle"
                                 :style="'color: ' + (slide.subtitleColor || '#ffffff')"

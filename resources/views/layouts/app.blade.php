@@ -19,29 +19,21 @@
         @include('components.analytics')
 
         <!-- Favicon -->
-        <link rel="icon" type="image/png" href="{{ asset('logo_fri.png') }}?v=3">
-        <link rel="shortcut icon" type="image/png" href="{{ asset('logo_fri.png') }}?v=3">
-        <link rel="apple-touch-icon" href="{{ asset('logo_fri.png') }}?v=3">
+        <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('brand/fri-icon.png') }}">
+        <link rel="apple-touch-icon" sizes="192x192" href="{{ asset('brand/fri-icon.png') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        {{-- Variables CSS del Tema Activo - DEBE IR ANTES del CSS compilado --}}
-        <style>
-            :root {
-                --theme-text-color: {{ $activeTheme ? $activeTheme->text_color : '#ffffff' }};
-                --theme-text-secondary-color: {{ $activeTheme ? $activeTheme->text_secondary_color : 'rgba(255, 255, 255, 0.8)' }};
-                --theme-button-color: {{ $activeTheme ? $activeTheme->button_color : 'rgba(255, 255, 255, 0.3)' }};
-            }
-        </style>
+        <x-theme-variables />
 
         <!-- Scripts (Vite maneja dev y producción automáticamente) -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         {{ $styles ?? '' }}
         @stack('scripts')
     </head>
-    <body class="font-sans antialiased" style="background: linear-gradient(135deg, {{ $activeTheme ? $activeTheme->background_gradient_start : '#667eea' }} 0%, {{ $activeTheme ? $activeTheme->background_gradient_mid : '#764ba2' }} 50%, {{ $activeTheme ? $activeTheme->background_gradient_end : '#f093fb' }} 100%); min-height: 100vh;">
+    <body class="font-sans antialiased theme-page" data-theme-legacy>
         {{-- Navegación avanzada --}}
         @include('components.advanced-navbar')
         
@@ -74,12 +66,11 @@
             @include('components.footer')
         </div>
 
-        {{-- Botón Flotante de Mensajería --}}
-        @include('components.messenger-float')
+        <div @class(['public-contact-actions' => request()->routeIs('home', 'cotizador')])>
+            @include('components.messenger-float')
+            @include('components.whatsapp-float')
+        </div>
 
-        {{-- Botón Flotante de WhatsApp --}}
-        @include('components.whatsapp-float')
-        
         {{-- Widget de Chat en Vivo (Tidio o Crisp) --}}
         @include('components.chat-widget')
     </body>

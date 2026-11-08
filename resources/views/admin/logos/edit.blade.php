@@ -40,11 +40,13 @@
                 @method('PATCH')
 
                 {{-- Vista previa del logo actual --}}
-                @if($logo->image_path)
+                @if($imageUrl = $logo->imageUrl())
                     <div class="p-4 rounded-xl bg-white/5 border border-white/10">
                         <p class="text-sm text-white/80 mb-3">Logo actual:</p>
-                        <img src="{{ asset($logo->image_path) }}" alt="{{ $logo->name ?? 'Logo' }}" class="max-w-xs h-auto rounded-lg border border-white/20">
+                        <img src="{{ $imageUrl }}" alt="{{ $logo->name ?? 'Logo' }}" class="max-w-xs h-auto rounded-lg border border-white/20">
                     </div>
+                @else
+                    <p class="text-sm text-amber-200">Archivo no disponible</p>
                 @endif
 
                 {{-- Nombre --}}
@@ -62,30 +64,12 @@
                     <x-input-error class="mt-2" :messages="$errors->get('name')" />
                 </div>
 
-                {{-- Nueva Imagen del Logo --}}
-                <div>
-                    <x-input-label for="logo_image" :value="__('Nueva Imagen del Logo (Opcional)')" class="text-white/90 mb-2" />
-                    <input 
-                        id="logo_image" 
-                        name="logo_image" 
-                        type="file" 
-                        accept="image/png,image/jpeg,image/jpg,image/svg+xml"
-                        class="auth-form-input" 
-                        onchange="previewImage(this)"
-                    />
-                    <p class="mt-1 text-xs text-white/60">Deja en blanco para mantener la imagen actual. Formatos: PNG, JPG, JPEG, SVG. Máx: 5MB</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('logo_image')" />
-                    
-                    {{-- Vista previa --}}
-                    <div id="image-preview" class="mt-4 hidden">
-                        <p class="text-sm text-white/80 mb-2">Vista previa de la nueva imagen:</p>
-                        <img id="preview" src="" alt="Vista previa" class="max-w-xs h-auto rounded-lg border border-white/20">
-                    </div>
-                </div>
+                <x-logo-upload :current="$imageUrl" />
 
                 {{-- Activar --}}
                 <div>
                     <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="hidden" name="is_active" value="0">
                         <input 
                             type="checkbox" 
                             name="is_active" 
@@ -161,24 +145,6 @@
         </x-ui.card>
     </x-ui.container>
 
-    <script>
-        function previewImage(input) {
-            const preview = document.getElementById('preview');
-            const previewDiv = document.getElementById('image-preview');
-            
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    previewDiv.classList.remove('hidden');
-                }
-                
-                reader.readAsDataURL(input.files[0]);
-            } else {
-                previewDiv.classList.add('hidden');
-            }
-        }
-    </script>
+
 </x-app-layout>
 

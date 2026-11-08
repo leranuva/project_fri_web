@@ -4,11 +4,7 @@
     <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
         <a href="{{ route('home') }}" class="flex items-center">
             <div class="w-12 h-12 flex items-center justify-center mr-2 bg-white rounded-full p-1">
-                @if(isset($activeLogo) && $activeLogo && $activeLogo->image_path)
-                    <img src="{{ asset($activeLogo->image_path) }}" alt="Flat Rate Imports" class="w-full h-full object-contain">
-                @else
-                    <img src="{{ asset('logo_fri.png') }}" alt="Flat Rate Imports" class="w-full h-full object-contain">
-                @endif
+                <x-brand-logo alt="Flat Rate Imports" class="w-full h-full object-contain" />
             </div>
             <span class="text-lg font-semibold text-gray-800">Flat Rate Imports</span>
         </a>

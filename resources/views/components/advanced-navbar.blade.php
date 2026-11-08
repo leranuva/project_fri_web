@@ -7,16 +7,12 @@
 
 {{-- Advanced Navigation Bar --}}
 <div x-data="{ mobileMenuOpen: false }" @keydown.escape.window="mobileMenuOpen = false">
-    <nav class="navbar-container">
+    <nav data-theme-explicit class="navbar-container">
         <div class="navbar">
             {{-- Brand/Logo --}}
-            <a href="{{ route('home') }}" class="navbar-brand">
+            <a href="{{ route('home') }}" class="navbar-brand theme-focus">
                 <div class="logo-icon">
-                    @if(isset($activeLogo) && $activeLogo && $activeLogo->image_path)
-                        <img src="{{ asset($activeLogo->image_path) }}" alt="Flat Rate Imports">
-                    @else
-                        <img src="{{ asset('logo_fri.png') }}" alt="Flat Rate Imports">
-                    @endif
+                    <x-brand-logo alt="Flat Rate Imports" />
                 </div>
                 <span class="brand-text">Flat Rate Imports</span>
             </a>
@@ -24,7 +20,7 @@
             {{-- Navigation Links --}}
             <ul class="navbar-nav" id="navbarNav">
                 <li class="nav-item">
-                    <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
+                    <a href="{{ route('home') }}" class="nav-link theme-focus {{ request()->routeIs('home') ? 'active theme-nav-active' : '' }}">
                         <svg class="nav-icon" viewBox="0 0 24 24">
                             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                             <polyline points="9,22 9,12 15,12 15,22"></polyline>
@@ -33,7 +29,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('cotizador') }}" class="nav-link {{ request()->routeIs('cotizador') ? 'active' : '' }}">
+                    <a href="{{ route('cotizador') }}" class="nav-link theme-focus {{ request()->routeIs('cotizador') ? 'active theme-nav-active' : '' }}">
                         <svg class="nav-icon" viewBox="0 0 24 24">
                             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                             <line x1="8" y1="21" x2="16" y2="21"></line>
@@ -43,7 +39,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('blog.index') }}" class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}">
+                    <a href="{{ route('blog.index') }}" class="nav-link theme-focus {{ request()->routeIs('blog.*') ? 'active theme-nav-active' : '' }}">
                         <svg class="nav-icon" viewBox="0 0 24 24">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14,2 14,8 20,8"></polyline>
@@ -54,7 +50,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="https://flatrateimports.store/" target="_blank" class="nav-link">
+                    <a href="https://flatrateimports.store/" target="_blank" class="nav-link theme-focus">
                         <svg class="nav-icon" viewBox="0 0 24 24">
                             <path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z"></path>
                         </svg>
@@ -63,7 +59,7 @@
                 </li>
                 @guest
                     <li class="nav-item">
-                        <a href="{{ route('login') }}" class="nav-link">
+                        <a href="{{ route('login') }}" class="nav-link theme-focus">
                             <svg class="nav-icon" viewBox="0 0 24 24">
                                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
                                 <polyline points="10,17 15,12 10,7"></polyline>
@@ -129,11 +125,7 @@
         <div class="mobile-menu-header">
             <a href="{{ route('home') }}" class="mobile-menu-brand" @click="mobileMenuOpen = false">
                 <div class="logo-icon">
-                    @if(isset($activeLogo) && $activeLogo && $activeLogo->image_path)
-                        <img src="{{ asset($activeLogo->image_path) }}" alt="Flat Rate Imports">
-                    @else
-                        <img src="{{ asset('logo_fri.png') }}" alt="Flat Rate Imports">
-                    @endif
+                    <x-brand-logo alt="Flat Rate Imports" />
                 </div>
                 <span class="brand-text">Flat Rate Imports</span>
             </a>
@@ -181,7 +173,7 @@
                 <li class="mobile-menu-item">
                     <a 
                         href="{{ route('dashboard') }}" 
-                        class="mobile-menu-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
+                        class="mobile-menu-link {{ request()->routeIs('dashboard') ? 'active theme-nav-active' : '' }}"
                         @click="mobileMenuOpen = false"
                     >
                         <svg class="mobile-menu-icon" viewBox="0 0 24 24">
@@ -201,7 +193,7 @@
                     <li class="mobile-menu-item">
                         <a 
                             href="{{ route('admin.users.index') }}" 
-                            class="mobile-menu-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
+                            class="mobile-menu-link {{ request()->routeIs('admin.users.*') ? 'active theme-nav-active' : '' }}"
                             @click="mobileMenuOpen = false"
                         >
                             <svg class="mobile-menu-icon" viewBox="0 0 24 24">
@@ -213,7 +205,7 @@
                     <li class="mobile-menu-item">
                         <a 
                             href="{{ route('admin.logos.index') }}" 
-                            class="mobile-menu-link {{ request()->routeIs('admin.logos.*') ? 'active' : '' }}"
+                            class="mobile-menu-link {{ request()->routeIs('admin.logos.*') ? 'active theme-nav-active' : '' }}"
                             @click="mobileMenuOpen = false"
                         >
                             <svg class="mobile-menu-icon" viewBox="0 0 24 24">
@@ -225,7 +217,7 @@
                     <li class="mobile-menu-item">
                         <a 
                             href="{{ route('admin.products.index') }}" 
-                            class="mobile-menu-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}"
+                            class="mobile-menu-link {{ request()->routeIs('admin.products.*') ? 'active theme-nav-active' : '' }}"
                             @click="mobileMenuOpen = false"
                         >
                             <svg class="mobile-menu-icon" viewBox="0 0 24 24">
@@ -242,7 +234,7 @@
             <li class="mobile-menu-item">
                 <a 
                     href="{{ route('home') }}" 
-                    class="mobile-menu-link {{ request()->routeIs('home') ? 'active' : '' }}"
+                    class="mobile-menu-link {{ request()->routeIs('home') ? 'active theme-nav-active' : '' }}"
                     @click="mobileMenuOpen = false"
                 >
                     <svg class="mobile-menu-icon" viewBox="0 0 24 24">
@@ -255,7 +247,7 @@
             <li class="mobile-menu-item">
                 <a 
                     href="{{ route('cotizador') }}" 
-                    class="mobile-menu-link {{ request()->routeIs('cotizador') ? 'active' : '' }}"
+                    class="mobile-menu-link {{ request()->routeIs('cotizador') ? 'active theme-nav-active' : '' }}"
                     @click="mobileMenuOpen = false"
                 >
                     <svg class="mobile-menu-icon" viewBox="0 0 24 24">
@@ -269,7 +261,7 @@
             <li class="mobile-menu-item">
                 <a 
                     href="{{ route('blog.index') }}" 
-                    class="mobile-menu-link {{ request()->routeIs('blog.*') ? 'active' : '' }}"
+                    class="mobile-menu-link {{ request()->routeIs('blog.*') ? 'active theme-nav-active' : '' }}"
                     @click="mobileMenuOpen = false"
                 >
                     <svg class="mobile-menu-icon" viewBox="0 0 24 24">

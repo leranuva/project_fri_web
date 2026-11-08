@@ -40,10 +40,12 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Verified::class, SendWelcomeEmail::class);
         Event::listen(LeadCreated::class, SendLeadToWebhook::class);
         
-        // Compartir el tema activo, logo activo y datos del footer con todas las vistas
+        $this->app->scoped('branding.logo-url', fn () => \App\Models\Logo::activeImageUrl());
+
+        $this->app->scoped('branding.theme-palette', fn () => \App\Support\ThemePalette::values(\App\Models\Theme::getActive()));
+
+        // Compartir el logo activo y los datos del footer con las vistas
         view()->composer('*', function ($view) {
-            $activeTheme = \App\Models\Theme::getActive();
-            $activeLogo = \App\Models\Logo::getActive();
             $footerSection = \App\Models\FooterSection::getActive();
             $footerLinksForFooter = \App\Models\FooterLink::active()->links()->ordered()->get();
             $footerSocials = \App\Models\FooterLink::active()->social()->ordered()->get();
@@ -53,8 +55,7 @@ class AppServiceProvider extends ServiceProvider
             $seoDescription = $view->getData()['seoDescription'] ?? config('seo.default_description');
             $seoImage = $view->getData()['seoImage'] ?? \App\Helpers\SeoHelper::image();
 
-            $view->with('activeTheme', $activeTheme);
-            $view->with('activeLogo', $activeLogo);
+            $view->with('brandLogoUrl', app('branding.logo-url'));
             $view->with('footerSection', $footerSection);
             $view->with('footerLinksForFooter', $footerLinksForFooter);
             $view->with('footerSocials', $footerSocials);

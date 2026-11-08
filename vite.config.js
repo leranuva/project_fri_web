@@ -14,7 +14,7 @@ export default defineConfig({
         }),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.svg'],
+            includeAssets: ['brand/fri-icon.png', 'brand/fri-monogram.svg'],
             manifest: {
                 name: 'Flat Rate Imports - Cotizador',
                 short_name: 'Flat Rate',
@@ -26,10 +26,16 @@ export default defineConfig({
                 scope: '/',
                 icons: [
                     {
-                        src: '/favicon.svg',
+                        src: '/brand/fri-icon.png',
+                        sizes: '192x192',
+                        type: 'image/png',
+                        purpose: 'any',
+                    },
+                    {
+                        src: '/brand/fri-monogram.svg',
                         sizes: 'any',
                         type: 'image/svg+xml',
-                        purpose: 'any maskable',
+                        purpose: 'any',
                     },
                 ],
             },

@@ -113,7 +113,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('benefits', \App\Http\Controllers\Admin\BenefitController::class);
     Route::resource('packages', \App\Http\Controllers\Admin\PackageController::class);
     Route::resource('themes', \App\Http\Controllers\Admin\ThemeController::class);
-    Route::post('themes/{id}/activate', [\App\Http\Controllers\Admin\ThemeController::class, 'activate'])->name('themes.activate');
+    Route::post('themes/{theme}/activate', [\App\Http\Controllers\Admin\ThemeController::class, 'activate'])->name('themes.activate');
+    Route::post('themes/{theme}/duplicate', [\App\Http\Controllers\Admin\ThemeController::class, 'duplicate'])->name('themes.duplicate');
     Route::get('process-sections', [\App\Http\Controllers\Admin\ProcessSectionController::class, 'index'])->name('process-sections.index');
     Route::patch('process-sections/{id}', [\App\Http\Controllers\Admin\ProcessSectionController::class, 'update'])->name('process-sections.update');
     Route::get('benefit-sections', [\App\Http\Controllers\Admin\BenefitSectionController::class, 'index'])->name('benefit-sections.index');
@@ -122,6 +123,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('store-sections', [\App\Http\Controllers\Admin\StoreSectionController::class, 'index'])->name('store-sections.index');
     Route::patch('store-sections/{id}', [\App\Http\Controllers\Admin\StoreSectionController::class, 'update'])->name('store-sections.update');
     Route::resource('logos', \App\Http\Controllers\Admin\LogoController::class);
+    Route::post('logos/preview', [\App\Http\Controllers\Admin\LogoController::class, 'preview'])
+        ->middleware('throttle:20,1')->name('logos.preview');
+    Route::get('logos/{id}/original', [\App\Http\Controllers\Admin\LogoController::class, 'downloadOriginal'])->name('logos.original');
     Route::post('logos/{id}/activate', [\App\Http\Controllers\Admin\LogoController::class, 'activate'])->name('logos.activate');
     Route::resource('blog-posts', \App\Http\Controllers\Admin\BlogPostController::class);
     Route::get('blog-sections', [\App\Http\Controllers\Admin\BlogSectionController::class, 'index'])->name('blog-sections.index');

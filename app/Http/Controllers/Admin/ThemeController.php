@@ -3,192 +3,86 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SaveThemeRequest;
 use App\Models\Theme;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ThemeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $themes = Theme::latest()->paginate(15);
-        return view('admin.themes.index', compact('themes'));
+        $themes = Theme::orderByDesc('is_active')->orderByDesc('published_at')->orderByDesc('id')->paginate(15);
+        $previousTheme = Theme::where('is_active', false)->whereNotNull('published_at')
+            ->orderByDesc('published_at')->orderByDesc('id')->first();
+
+        return view('admin.themes.index', compact('themes', 'previousTheme'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('admin.themes.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(SaveThemeRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'primary_color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'secondary_color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'accent_color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'background_gradient_start' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'background_gradient_mid' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'background_gradient_end' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'text_color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'text_secondary_color' => ['nullable', 'string'],
-            'button_color' => ['nullable', 'string'],
-            'is_active' => ['nullable', 'boolean'],
-        ], [
-            'name.required' => 'El nombre del tema es obligatorio.',
-            'primary_color.required' => 'El color principal es obligatorio.',
-            'primary_color.regex' => 'El color principal debe ser un código hexadecimal válido.',
-            'secondary_color.required' => 'El color secundario es obligatorio.',
-            'secondary_color.regex' => 'El color secundario debe ser un código hexadecimal válido.',
-            'accent_color.required' => 'El color de acento es obligatorio.',
-            'accent_color.regex' => 'El color de acento debe ser un código hexadecimal válido.',
-            'background_gradient_start.required' => 'El color de inicio del gradiente es obligatorio.',
-            'background_gradient_start.regex' => 'El color de inicio del gradiente debe ser un código hexadecimal válido.',
-            'background_gradient_mid.required' => 'El color medio del gradiente es obligatorio.',
-            'background_gradient_mid.regex' => 'El color medio del gradiente debe ser un código hexadecimal válido.',
-            'background_gradient_end.required' => 'El color final del gradiente es obligatorio.',
-            'background_gradient_end.regex' => 'El color final del gradiente debe ser un código hexadecimal válido.',
-            'text_color.required' => 'El color de texto es obligatorio.',
-            'text_color.regex' => 'El color de texto debe ser un código hexadecimal válido.',
-        ]);
+        $theme = Theme::create($request->paletteData() + ['is_active' => false]);
 
-        // Si se marca como activo, desactivar todos los demás
-        if ($validated['is_active'] ?? false) {
-            Theme::where('is_active', true)->update(['is_active' => false]);
-        }
-
-        $theme = Theme::create([
-            'name' => $validated['name'],
-            'primary_color' => $validated['primary_color'],
-            'secondary_color' => $validated['secondary_color'],
-            'accent_color' => $validated['accent_color'],
-            'background_gradient_start' => $validated['background_gradient_start'],
-            'background_gradient_mid' => $validated['background_gradient_mid'],
-            'background_gradient_end' => $validated['background_gradient_end'],
-            'text_color' => $validated['text_color'],
-            'text_secondary_color' => !empty($validated['text_secondary_color']) ? $validated['text_secondary_color'] : 'rgba(255, 255, 255, 0.8)',
-            'button_color' => !empty($validated['button_color']) ? $validated['button_color'] : 'rgba(255, 255, 255, 0.3)',
-            'is_active' => $validated['is_active'] ?? false,
-        ]);
-
-        return redirect()->route('admin.themes.index')
-            ->with('success', 'Tema creado exitosamente.');
+        return redirect()->route('admin.themes.show', $theme)->with('success', 'Borrador guardado.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Theme $theme)
     {
-        $theme = Theme::findOrFail($id);
         return view('admin.themes.show', compact('theme'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(Theme $theme)
     {
-        $theme = Theme::findOrFail($id);
+        abort_if($theme->published_at || $theme->is_active, 409, 'Duplica el tema publicado para editarlo.');
+
         return view('admin.themes.edit', compact('theme'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(SaveThemeRequest $request, Theme $theme)
     {
-        $theme = Theme::findOrFail($id);
+        DB::transaction(function () use ($request, $theme): void {
+            $draft = Theme::whereKey($theme->getKey())->lockForUpdate()->firstOrFail();
+            abort_if($draft->published_at || $draft->is_active, 409, 'Duplica el tema publicado para editarlo.');
+            $draft->update($request->paletteData());
+        }, 3);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'primary_color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'secondary_color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'accent_color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'background_gradient_start' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'background_gradient_mid' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'background_gradient_end' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'text_color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
-            'text_secondary_color' => ['nullable', 'string'],
-            'button_color' => ['nullable', 'string'],
-            'is_active' => ['nullable', 'boolean'],
-        ], [
-            'name.required' => 'El nombre del tema es obligatorio.',
-            'primary_color.required' => 'El color principal es obligatorio.',
-            'primary_color.regex' => 'El color principal debe ser un código hexadecimal válido.',
-            'secondary_color.required' => 'El color secundario es obligatorio.',
-            'secondary_color.regex' => 'El color secundario debe ser un código hexadecimal válido.',
-            'accent_color.required' => 'El color de acento es obligatorio.',
-            'accent_color.regex' => 'El color de acento debe ser un código hexadecimal válido.',
-            'background_gradient_start.required' => 'El color de inicio del gradiente es obligatorio.',
-            'background_gradient_start.regex' => 'El color de inicio del gradiente debe ser un código hexadecimal válido.',
-            'background_gradient_mid.required' => 'El color medio del gradiente es obligatorio.',
-            'background_gradient_mid.regex' => 'El color medio del gradiente debe ser un código hexadecimal válido.',
-            'background_gradient_end.required' => 'El color final del gradiente es obligatorio.',
-            'background_gradient_end.regex' => 'El color final del gradiente debe ser un código hexadecimal válido.',
-            'text_color.required' => 'El color de texto es obligatorio.',
-            'text_color.regex' => 'El color de texto debe ser un código hexadecimal válido.',
-        ]);
-
-        // Si se marca como activo, desactivar todos los demás
-        if ($validated['is_active'] ?? false) {
-            Theme::where('is_active', true)->where('id', '!=', $id)->update(['is_active' => false]);
-        }
-
-        $theme->update([
-            'name' => $validated['name'],
-            'primary_color' => $validated['primary_color'],
-            'secondary_color' => $validated['secondary_color'],
-            'accent_color' => $validated['accent_color'],
-            'background_gradient_start' => $validated['background_gradient_start'],
-            'background_gradient_mid' => $validated['background_gradient_mid'],
-            'background_gradient_end' => $validated['background_gradient_end'],
-            'text_color' => $validated['text_color'],
-            'text_secondary_color' => isset($validated['text_secondary_color']) && trim($validated['text_secondary_color']) !== '' ? $validated['text_secondary_color'] : $theme->text_secondary_color,
-            'button_color' => isset($validated['button_color']) && trim($validated['button_color']) !== '' ? $validated['button_color'] : $theme->button_color,
-            'is_active' => $validated['is_active'] ?? false,
-        ]);
-
-        return redirect()->route('admin.themes.index')
-            ->with('success', 'Tema actualizado exitosamente.');
+        return redirect()->route('admin.themes.show', $theme)->with('success', 'Borrador actualizado.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function duplicate(Theme $theme)
     {
-        $theme = Theme::findOrFail($id);
-        
-        // No permitir eliminar si es el único tema activo
-        if ($theme->is_active && Theme::where('is_active', true)->count() === 1) {
-            return redirect()->route('admin.themes.index')
-                ->with('error', 'No se puede eliminar el tema activo. Activa otro tema primero.');
-        }
+        $draft = $theme->replicate(['published_at']);
+        $draft->name = Str::limit($theme->name, 244, '') . ' · copia';
+        $draft->is_active = false;
+        $draft->saveOrFail();
 
-        $theme->delete();
-
-        return redirect()->route('admin.themes.index')
-            ->with('success', 'Tema eliminado exitosamente.');
+        return redirect()->route('admin.themes.edit', $draft)->with('success', 'Copia creada como borrador.');
     }
 
-    /**
-     * Activate a theme.
-     */
-    public function activate(string $id)
+    public function destroy(Theme $theme)
     {
-        $theme = Theme::findOrFail($id);
+        $deleted = DB::transaction(function () use ($theme): bool {
+            $draft = Theme::whereKey($theme->getKey())->lockForUpdate()->firstOrFail();
+
+            return ! $draft->published_at && ! $draft->is_active && $draft->delete();
+        }, 3);
+
+        return redirect()->route('admin.themes.index')->with(
+            $deleted ? 'success' : 'error',
+            $deleted ? 'Borrador eliminado.' : 'Los temas publicados se conservan en el historial.',
+        );
+    }
+
+    public function activate(Theme $theme)
+    {
+        $restoring = $theme->published_at && ! $theme->is_active;
         $theme->activate();
 
-        return redirect()->route('admin.themes.index')
-            ->with('success', 'Tema activado exitosamente.');
+        return redirect()->route('admin.themes.index')->with('success', $restoring ? 'Tema restaurado.' : 'Tema publicado.');
     }
 }

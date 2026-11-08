@@ -14,11 +14,7 @@
                 </button>
                 
                 <a href="{{ route('home') }}" class="ml-3">
-                    @if(isset($activeLogo) && $activeLogo && $activeLogo->image_path)
-                        <img src="{{ asset($activeLogo->image_path) }}" alt="Flat Rate Imports" class="w-full h-full object-contain">
-                    @else
-                        <img src="{{ asset('logo_fri.png') }}" alt="Flat Rate Imports" class="w-full h-full object-contain">
-                    @endif
+                    <x-brand-logo alt="Flat Rate Imports" class="w-full h-full object-contain" />
                 </a>
             </div>
 

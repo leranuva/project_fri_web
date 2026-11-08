@@ -41,27 +41,7 @@
                     <x-input-error class="mt-2" :messages="$errors->get('name')" />
                 </div>
 
-                {{-- Imagen del Logo --}}
-                <div>
-                    <x-input-label for="logo_image" :value="__('Imagen del Logo')" class="text-white/90 mb-2" />
-                    <input 
-                        id="logo_image" 
-                        name="logo_image" 
-                        type="file" 
-                        accept="image/png,image/jpeg,image/jpg,image/svg+xml"
-                        class="auth-form-input" 
-                        required
-                        onchange="previewImage(this)"
-                    />
-                    <p class="mt-1 text-xs text-white/60">Formatos permitidos: PNG, JPG, JPEG, SVG. Tamaño máximo: 5MB</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('logo_image')" />
-                    
-                    {{-- Vista previa --}}
-                    <div id="image-preview" class="mt-4 hidden">
-                        <p class="text-sm text-white/80 mb-2">Vista previa:</p>
-                        <img id="preview" src="" alt="Vista previa" class="max-w-xs h-auto rounded-lg border border-white/20">
-                    </div>
-                </div>
+                <x-logo-upload required />
 
                 {{-- Activar automáticamente --}}
                 <div>
@@ -112,24 +92,6 @@
         </x-ui.card>
     </x-ui.container>
 
-    <script>
-        function previewImage(input) {
-            const preview = document.getElementById('preview');
-            const previewDiv = document.getElementById('image-preview');
-            
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    previewDiv.classList.remove('hidden');
-                }
-                
-                reader.readAsDataURL(input.files[0]);
-            } else {
-                previewDiv.classList.add('hidden');
-            }
-        }
-    </script>
+
 </x-app-layout>
 

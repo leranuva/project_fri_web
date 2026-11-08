@@ -4,8 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Logo;
+use App\Support\LogoImage;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\Mime\MimeTypes;
+use Throwable;
 
 class LogoController extends Controller
 {
@@ -26,43 +33,40 @@ class LogoController extends Controller
         return view('admin.logos.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request, LogoImage $images)
     {
-        $validated = $request->validate([
-            'name' => ['nullable', 'string', 'max:255'],
-            'logo_image' => ['required', 'image', 'mimes:png,jpg,jpeg,svg', 'max:5120'], // Máximo 5MB
-            'is_active' => ['nullable', 'boolean'],
-            'order' => ['nullable', 'integer', 'min:0'],
-        ], [
-            'logo_image.required' => 'La imagen del logo es obligatoria.',
-            'logo_image.image' => 'El archivo debe ser una imagen válida.',
-            'logo_image.mimes' => 'La imagen debe ser de tipo PNG, JPG, JPEG o SVG.',
-            'logo_image.max' => 'La imagen no debe ser mayor a 5MB.',
-        ]);
+        $validated = $this->validateLogo($request, 'required');
+        $path = $this->storeImage($validated['logo_image'], $images);
 
-        // Manejar subida de imagen
-        $logoImagePath = null;
-        if ($request->hasFile('logo_image')) {
-            $logoImagePath = $request->file('logo_image')->store('logos', 'public');
+        try {
+            DB::transaction(function () use ($validated, $path): void {
+                $this->lockLogos();
+                $logo = Logo::create([
+                    'name' => $validated['name'] ?? 'Logo ' . now()->format('Y-m-d'),
+                    'image_path' => $path,
+                    'order' => $validated['order'] ?? 0,
+                    'is_active' => false,
+                ]);
+                if ($validated['is_active'] ?? false) {
+                    $logo->activate();
+                }
+            }, 3);
+        } catch (Throwable $error) {
+            $this->deleteManagedImage($path);
+            throw $error;
         }
 
-        // Si se marca como activo, desactivar los demás
-        if ($request->has('is_active') && $request->is_active) {
-            Logo::where('is_active', true)->update(['is_active' => false]);
-        }
+        return redirect()->route('admin.logos.index')->with('success', 'Logo creado exitosamente.');
+    }
 
-        $logo = Logo::create([
-            'name' => $validated['name'] ?? 'Logo ' . now()->format('Y-m-d'),
-            'image_path' => $logoImagePath ? 'storage/' . $logoImagePath : null,
-            'is_active' => $request->has('is_active') && $request->is_active ? true : false,
-            'order' => $validated['order'] ?? 0,
+    public function preview(Request $request, LogoImage $images)
+    {
+        $validated = $request->validate(['logo_image' => ['required', 'file', 'max:5120']]);
+
+        return response($images->optimize($validated['logo_image']), 200, [
+            'Content-Type' => 'image/webp',
+            'Cache-Control' => 'no-store',
         ]);
-
-        return redirect()->route('admin.logos.index')
-            ->with('success', 'Logo creado exitosamente.');
     }
 
     /**
@@ -71,7 +75,25 @@ class LogoController extends Controller
     public function show(string $id)
     {
         $logo = Logo::findOrFail($id);
-        return view('admin.logos.show', compact('logo'));
+        $original = $logo->originalKey();
+        $hasOriginal = $original && Storage::disk('local')->exists($original);
+
+        return view('admin.logos.show', compact('logo', 'hasOriginal'));
+    }
+
+    public function downloadOriginal(string $id)
+    {
+        $original = Logo::findOrFail($id)->originalKey();
+        $disk = Storage::disk('local');
+        abort_unless($original && $disk->exists($original), 404);
+
+        $mime = $disk->mimeType($original) ?: 'application/octet-stream';
+        $extension = MimeTypes::getDefault()->getExtensions($mime)[0] ?? 'bin';
+
+        return $disk->download($original, 'logo-original.' . $extension, [
+            'Content-Type' => 'application/octet-stream',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /**
@@ -83,81 +105,120 @@ class LogoController extends Controller
         return view('admin.logos.edit', compact('logo'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id, LogoImage $images)
     {
-        $logo = Logo::findOrFail($id);
-        
-        $validated = $request->validate([
-            'name' => ['nullable', 'string', 'max:255'],
-            'logo_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg', 'max:5120'],
-            'is_active' => ['nullable', 'boolean'],
-            'order' => ['nullable', 'integer', 'min:0'],
-        ], [
-            'logo_image.image' => 'El archivo debe ser una imagen válida.',
-            'logo_image.mimes' => 'La imagen debe ser de tipo PNG, JPG, JPEG o SVG.',
-            'logo_image.max' => 'La imagen no debe ser mayor a 5MB.',
-        ]);
+        Logo::findOrFail($id);
+        $validated = $this->validateLogo($request, 'nullable');
+        $file = $validated['logo_image'] ?? null;
+        $path = $file ? $this->storeImage($file, $images) : null;
 
-        // Manejar subida de nueva imagen
-        if ($request->hasFile('logo_image')) {
-            // Eliminar imagen anterior si existe
-            if ($logo->image_path && Storage::disk('public')->exists(str_replace('storage/', '', $logo->image_path))) {
-                Storage::disk('public')->delete(str_replace('storage/', '', $logo->image_path));
-            }
-            
-            $logoImagePath = $request->file('logo_image')->store('logos', 'public');
-            $logo->image_path = 'storage/' . $logoImagePath;
+        try {
+            DB::transaction(function () use ($id, $validated, $path): void {
+                $this->lockLogos();
+                $logo = Logo::findOrFail($id);
+                if ($path && $logo->imageUrl()) {
+                    $previous = $logo->replicate();
+                    $previous->name = Str::limit($logo->name ?? 'Logo', 220, '') . ' · versión anterior';
+                    $previous->is_active = false;
+                    $previous->saveOrFail();
+                }
+                $logo->name = $validated['name'] ?? $logo->name;
+                $logo->order = $validated['order'] ?? $logo->order;
+                $logo->image_path = $path ?? $logo->image_path;
+                $active = $validated['is_active'] ?? $logo->is_active;
+                if ($active) {
+                    $this->ensureImageAvailable($logo);
+                    $logo->activate();
+                } else {
+                    $logo->is_active = false;
+                    $logo->save();
+                }
+            }, 3);
+        } catch (Throwable $error) {
+            $this->deleteManagedImage($path);
+            throw $error;
         }
 
-        $logo->name = $validated['name'] ?? $logo->name;
-        $logo->order = $validated['order'] ?? $logo->order;
-
-        // Si se marca como activo, desactivar los demás
-        if ($request->has('is_active')) {
-            if ($request->is_active) {
-                Logo::where('id', '!=', $logo->id)->update(['is_active' => false]);
-                $logo->is_active = true;
-            } else {
-                $logo->is_active = false;
-            }
-        }
-
-        $logo->save();
-
-        return redirect()->route('admin.logos.index')
-            ->with('success', 'Logo actualizado exitosamente.');
+        return redirect()->route('admin.logos.index')->with('success', 'Logo actualizado exitosamente.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
-        $logo = Logo::findOrFail($id);
-        
-        // Eliminar imagen del storage
-        if ($logo->image_path && Storage::disk('public')->exists(str_replace('storage/', '', $logo->image_path))) {
-            Storage::disk('public')->delete(str_replace('storage/', '', $logo->image_path));
-        }
-        
-        $logo->delete();
-        
-        return redirect()->route('admin.logos.index')
-            ->with('success', 'Logo eliminado exitosamente.');
+        $path = DB::transaction(function () use ($id): ?string {
+            $this->lockLogos();
+            $logo = Logo::findOrFail($id);
+            $path = $logo->image_path;
+            $logo->delete();
+
+            return $path;
+        }, 3);
+        $this->deleteManagedImage($path);
+
+        return redirect()->route('admin.logos.index')->with('success', 'Logo eliminado exitosamente.');
     }
 
-    /**
-     * Activate a logo.
-     */
     public function activate(string $id)
     {
-        $logo = Logo::findOrFail($id);
-        $logo->activate();
-        
-        return redirect()->route('admin.logos.index')
-            ->with('success', 'Logo activado exitosamente.');
+        DB::transaction(function () use ($id): void {
+            $this->lockLogos();
+            $logo = Logo::findOrFail($id);
+            $this->ensureImageAvailable($logo);
+            $logo->activate();
+        }, 3);
+
+        return redirect()->route('admin.logos.index')->with('success', 'Logo activado exitosamente.');
+    }
+
+    private function validateLogo(Request $request, string $fileRequirement): array
+    {
+        return $request->validate([
+            'name' => ['nullable', 'string', 'max:255'],
+            'logo_image' => [$fileRequirement, 'file', 'max:5120'],
+            'is_active' => ['nullable', 'boolean'],
+            'order' => ['nullable', 'integer', 'min:0'],
+        ]);
+    }
+
+    private function storeImage(UploadedFile $file, LogoImage $images): string
+    {
+        $optimized = $images->optimize($file);
+        $key = 'logos/' . Str::uuid() . '.webp';
+        $path = 'storage/' . $key;
+        $source = Logo::sourceKey($path);
+
+        try {
+            if (! Storage::disk('local')->put($source, $file->get())
+                || ! Storage::disk('public')->put($key, $optimized)) {
+                throw ValidationException::withMessages(['logo_image' => 'No se pudo guardar el logo.']);
+            }
+        } catch (Throwable $error) {
+            $this->deleteManagedImage($path);
+            throw $error;
+        }
+
+        return $path;
+    }
+
+    private function ensureImageAvailable(Logo $logo): void
+    {
+        if (! $logo->imageUrl()) {
+            throw ValidationException::withMessages(['logo_image' => 'Sube un archivo válido antes de activar este logo.']);
+        }
+    }
+
+    private function deleteManagedImage(?string $path): void
+    {
+        if ($path && preg_match('~^storage/logos/[a-z0-9-]+\.(webp|png|jpe?g|svg)$~iD', $path)
+            && ! Logo::where('image_path', $path)->exists()) {
+            Storage::disk('public')->delete(substr($path, 8));
+            if ($source = Logo::sourceKey($path)) {
+                Storage::disk('local')->delete($source);
+            }
+        }
+    }
+
+    private function lockLogos(): void
+    {
+        Logo::orderBy('id')->lockForUpdate()->get(['id']);
     }
 }

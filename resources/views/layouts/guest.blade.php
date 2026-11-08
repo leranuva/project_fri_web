@@ -19,27 +19,19 @@
         @include('components.analytics')
 
         <!-- Favicon -->
-        <link rel="icon" type="image/png" href="{{ asset('logo_fri.png') }}?v=3">
-        <link rel="shortcut icon" type="image/png" href="{{ asset('logo_fri.png') }}?v=3">
-        <link rel="apple-touch-icon" href="{{ asset('logo_fri.png') }}?v=3">
+        <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('brand/fri-icon.png') }}">
+        <link rel="apple-touch-icon" sizes="192x192" href="{{ asset('brand/fri-icon.png') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        {{-- Variables CSS del Tema Activo - DEBE IR ANTES del CSS compilado --}}
-        <style>
-            :root {
-                --theme-text-color: {{ $activeTheme ? $activeTheme->text_color : '#ffffff' }};
-                --theme-text-secondary-color: {{ $activeTheme ? $activeTheme->text_secondary_color : 'rgba(255, 255, 255, 0.8)' }};
-                --theme-button-color: {{ $activeTheme ? $activeTheme->button_color : 'rgba(255, 255, 255, 0.3)' }};
-            }
-        </style>
+        <x-theme-variables />
 
         <!-- Scripts (Vite maneja dev y producción automáticamente) -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased" style="background: linear-gradient(135deg, {{ $activeTheme ? $activeTheme->background_gradient_start : '#667eea' }} 0%, {{ $activeTheme ? $activeTheme->background_gradient_mid : '#764ba2' }} 50%, {{ $activeTheme ? $activeTheme->background_gradient_end : '#f093fb' }} 100%); min-height: 100vh;">
+    <body class="font-sans text-gray-900 antialiased theme-page" data-theme-legacy>
         {{-- Navegación avanzada para páginas públicas (excepto login/register/verification) --}}
         @if(!request()->routeIs('login') && !request()->routeIs('register') && !request()->routeIs('verification.notice'))
             @include('components.advanced-navbar')
@@ -55,12 +47,8 @@
                 <div class="mb-6 sm:mb-8">
                     <a href="{{ route('home') }}" class="inline-block transition-transform hover:scale-105">
                         <div class="flex items-center gap-3">
-                            <div class="logo-icon" style="width: 70px; height: 70px;">
-                                @if(isset($activeLogo) && $activeLogo && $activeLogo->image_path)
-                                    <img src="{{ asset($activeLogo->image_path) }}" alt="Flat Rate Imports" class="w-full h-full object-contain">
-                                @else
-                                    <img src="{{ asset('logo_fri.png') }}" alt="Flat Rate Imports" class="w-full h-full object-contain">
-                                @endif
+                            <div class="logo-icon" style="--brand-logo-size: 70px;">
+                                <x-brand-logo alt="Flat Rate Imports" class="w-full h-full object-contain" />
                             </div>
                             <span class="brand-text text-2xl sm:text-3xl">Flat Rate Imports</span>
                         </div>
@@ -82,16 +70,13 @@
             @include('components.footer')
         @endif
 
-        {{-- Botón Flotante de Mensajería --}}
-        @if(!request()->routeIs('login') && !request()->routeIs('register') && !request()->routeIs('verification.notice'))
-            @include('components.messenger-float')
-        @endif
+        @unless(request()->routeIs('login', 'register', 'verification.notice'))
+            <div @class(['public-contact-actions' => request()->routeIs('home', 'cotizador')])>
+                @include('components.messenger-float')
+                @include('components.whatsapp-float')
+            </div>
+        @endunless
 
-        {{-- Botón Flotante de WhatsApp --}}
-        @if(!request()->routeIs('login') && !request()->routeIs('register') && !request()->routeIs('verification.notice'))
-            @include('components.whatsapp-float')
-        @endif
-        
         {{-- Widget de Chat en Vivo (Tidio o Crisp) --}}
         @if(!request()->routeIs('login') && !request()->routeIs('register') && !request()->routeIs('verification.notice'))
             @include('components.chat-widget')

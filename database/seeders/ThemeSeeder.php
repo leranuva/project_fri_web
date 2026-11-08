@@ -73,10 +73,12 @@ class ThemeSeeder extends Seeder
         $bar->start();
 
         foreach ($themes as $themeData) {
-            Theme::updateOrCreate(
-                ['name' => $themeData['name']],
-                $themeData
-            );
+            $publishByDefault = $themeData['is_active'];
+            $themeData['is_active'] = false;
+            $theme = Theme::firstOrCreate(['name' => $themeData['name']], $themeData);
+            if ($publishByDefault && ! Theme::getActive()) {
+                $theme->activate();
+            }
             $bar->advance();
         }
 

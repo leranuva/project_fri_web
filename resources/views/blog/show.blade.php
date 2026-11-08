@@ -33,8 +33,8 @@
                 {{-- CTA Tienda --}}
                 @php
                     $ctaVisible = ($blogSection?->cta_button_visible ?? true) && ($post->cta_active ?? true);
-                    $ctaUrl = ($post->cta_link && filter_var($post->cta_link, FILTER_VALIDATE_URL)) ? $post->cta_link : ($blogSection?->cta_button_url_base ?? config('seo.store_url'));
                     $ctaLabel = $post->cta_text ?: ($blogSection?->cta_button_text ?? 'Ir a la tienda');
+                    $ctaUrl = $post->resolveCtaUrl($blogSection?->cta_button_url_base, $ctaLabel);
                     $ctaAnimated = $blogSection?->cta_button_animated ?? true;
                 @endphp
                 @if($ctaVisible)

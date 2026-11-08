@@ -11,7 +11,7 @@
     }
 @endphp
 
-<x-app-layout>
+<x-app-layout seo-title="Cotizador de importaciones de EE. UU. a Ecuador | Flat Rate Imports">
     <x-slot name="styles">
         <style>
         /* Animación CTA botón "Comprar en la Tienda" - pulso de escala cada 2 segundos */
@@ -33,21 +33,21 @@
         </style>
     </x-slot>
     <x-slot name="header">
-        <h2 class="font-semibold text-lg sm:text-xl leading-tight" style="color: {{ $cotizadorSection && $cotizadorSection->is_active && $cotizadorSection->title_color ? $cotizadorSection->title_color : '#ffffff' }};">
+        <h1 class="font-semibold text-lg sm:text-xl leading-tight" style="color: {{ $cotizadorSection && $cotizadorSection->is_active && $cotizadorSection->title_color ? $cotizadorSection->title_color : '#ffffff' }};">
             {{ $cotizadorSection && $cotizadorSection->is_active ? $cotizadorSection->title : __('Cotizador de Importaciones') }}
-        </h2>
+        </h1>
     </x-slot>
 
     <x-ui.container>
         @if($cotizadorSection && $cotizadorSection->is_active && $cotizadorSection->description)
             <div class="mb-6 sm:mb-8">
-                <p class="text-sm sm:text-base text-white text-opacity-80 mb-6">
+                <p class="text-sm sm:text-base theme-text-secondary mb-6">
                     {{ $cotizadorSection->description }}
                 </p>
             </div>
         @else
             <div class="mb-6 sm:mb-8">
-                <p class="text-sm sm:text-base text-white text-opacity-80 mb-6">
+                <p class="text-sm sm:text-base theme-text-secondary mb-6">
                     Completa el formulario para obtener una cotización personalizada de tus importaciones.
                 </p>
             </div>
@@ -55,7 +55,6 @@
 
         <div 
             x-data="cotizadorData()"
-            x-init="init()"
             class="space-y-6"
             role="region"
             aria-label="Cotizador de importaciones"
@@ -123,7 +122,7 @@
                                             :aria-selected="formData.product === product.key"
                                             @click="selectProduct(product)"
                                             @keydown.enter.prevent="selectProduct(product)"
-                                            class="w-full text-left px-4 py-3 hover:bg-blue-500/20 text-gray-800 hover:text-blue-700 font-medium transition-all duration-200 border-b border-gray-200/50 last:border-b-0 product-dropdown-item focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            class="w-full text-left px-4 py-3 hover:bg-blue-500/20 text-gray-800 hover:text-blue-700 font-medium transition-all duration-200 border-b border-gray-200/50 last:border-b-0 product-dropdown-item theme-focus"
                                             x-text="product.name"
                                         ></button>
                                     </template>
@@ -216,18 +215,21 @@
                             <x-slot name="labelSlot">
                                 <x-input-label for="shippingMethod" :value="__('Seleccionar Método de Envío')" class="mb-2" style="color: {{ $shippingMethodLabelColor }};" />
                             </x-slot>
-                            <select 
+                            <select
+                                id="shippingMethod"
                                 x-model="formData.shippingMethod"
+                                :disabled="shippingMethods.length === 0"
                                 class="w-full auth-form-input shipping-method-select"
                                 required
-                                aria-label="Seleccionar método de envío"
+                                aria-describedby="shippingMethodStatus"
                             >
-                                <option value="" style="background-color: rgba(30, 30, 30, 0.95); color: rgba(255, 255, 255, 0.7);">Seleccione un método</option>
+                                <option value="" disabled style="background-color: rgba(30, 30, 30, 0.95); color: rgba(255, 255, 255, 0.7);">Selecciona un método de envío</option>
                                 <template x-for="method in shippingMethods" :key="method">
                                     <option :value="method" style="background-color: rgba(30, 30, 30, 0.95); color: white;" x-text="methodLabels[method] || method.charAt(0).toUpperCase() + method.slice(1)"></option>
                                 </template>
-                                <option value="" disabled x-show="shippingMethods.length === 0" x-cloak>No hay métodos de envío configurados</option>
                             </select>
+                            <p id="shippingMethodStatus" role="status" class="text-sm text-white/90"
+                                :class="{ 'mt-2': shippingMethodStatus }" x-text="shippingMethodStatus"></p>
                         </x-ui.form-group>
                     </div>
 
@@ -236,16 +238,16 @@
                         <button 
                             type="button" 
                             @click="reset()"
-                            class="glass-button glass-button-full"
+                            class="glass-button glass-button-full theme-focus"
                         >
                             Limpiar Formulario
                         </button>
                         <button 
                             type="submit"
-                            :disabled="isCalculating"
-                            class="glass-button glass-button-lg glass-button-full"
-                            :class="{ 'opacity-50 cursor-not-allowed': isCalculating }"
-                            aria-busy="isCalculating"
+                            :disabled="isCalculating || shippingMethods.length === 0"
+                            class="glass-button glass-button-lg glass-button-full theme-focus"
+                            :class="{ 'opacity-50 cursor-not-allowed': isCalculating || shippingMethods.length === 0 }"
+                            :aria-busy="isCalculating"
                             aria-live="polite"
                         >
                             <span x-show="!isCalculating">Calcular Cotización</span>
@@ -623,6 +625,8 @@
             return {
                 products: @json($productsArray),
                 shippingMethods: @json($shippingMethods),
+                shippingMethodsLoading: @json(empty($shippingMethods)),
+                shippingMethodsFailed: false,
                 storeBase,
                 storeSearchPath,
                 shippingMethodRanges: @json($shippingMethodRanges ?? []),
@@ -666,29 +670,39 @@
                     }
                 },
 
+                get shippingMethodStatus() {
+                    if (this.shippingMethods.length > 0) return '';
+                    if (this.shippingMethodsLoading) return 'Cargando métodos de envío…';
+                    if (this.shippingMethodsFailed) return 'No se pudieron cargar los métodos de envío. Recarga la página para volver a intentarlo.';
+                    return 'No hay métodos de envío disponibles.';
+                },
+
                 async loadDataFromApi() {
                     try {
                         const url = window.location.origin + '/api/cotizador/data';
                         const response = await fetch(url);
                         if (!response.ok) {
-                            console.warn('API cotizador:', response.status, response.statusText);
-                            return;
+                            throw new Error('Respuesta HTTP ' + response.status);
                         }
                         const json = await response.json();
-                        if (json.success && json.data) {
-                            if (Object.keys(json.data.products || {}).length > 0) {
-                                this.products = json.data.products;
-                                this.filteredProducts = this.getAllProducts();
-                            }
-                            if (Array.isArray(json.data.shippingMethods) && json.data.shippingMethods.length > 0) {
-                                this.shippingMethods = json.data.shippingMethods;
-                            }
-                            if (json.data.shippingMethodRanges && typeof json.data.shippingMethodRanges === 'object') {
-                                this.shippingMethodRanges = json.data.shippingMethodRanges;
-                            }
+                        if (!json.success || !Array.isArray(json.data?.shippingMethods)) {
+                            throw new Error('Respuesta de cotización no válida');
+                        }
+                        if (Object.keys(json.data.products || {}).length > 0) {
+                            this.products = json.data.products;
+                            this.filteredProducts = this.getAllProducts();
+                        }
+                        if (json.data.shippingMethods.length > 0) {
+                            this.shippingMethods = json.data.shippingMethods;
+                        }
+                        if (json.data.shippingMethodRanges && typeof json.data.shippingMethodRanges === 'object') {
+                            this.shippingMethodRanges = json.data.shippingMethodRanges;
                         }
                     } catch (e) {
+                        this.shippingMethodsFailed = true;
                         console.warn('No se pudieron cargar productos/métodos desde API:', e);
+                    } finally {
+                        this.shippingMethodsLoading = false;
                     }
                 },
 

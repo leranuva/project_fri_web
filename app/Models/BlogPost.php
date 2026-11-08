@@ -38,10 +38,19 @@ class BlogPost extends Model
      */
     public function getCtaUrlAttribute(): string
     {
+        return $this->resolveCtaUrl();
+    }
+
+    public function resolveCtaUrl(?string $fallbackUrl = null, ?string $label = null): string
+    {
+        if (strtolower(trim($label ?? $this->cta_text ?? '')) === 'obtener tu casillero') {
+            return route('register');
+        }
+
         if ($this->cta_link && filter_var($this->cta_link, FILTER_VALIDATE_URL)) {
             return $this->cta_link;
         }
-        return config('seo.store_url');
+        return $fallbackUrl ?? config('seo.store_url');
     }
 
     /**

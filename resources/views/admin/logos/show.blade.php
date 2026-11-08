@@ -36,13 +36,21 @@
 
             <div class="space-y-6">
                 {{-- Vista del Logo --}}
-                @if($logo->image_path)
+                @if($imageUrl = $logo->imageUrl())
                     <div class="p-6 rounded-xl bg-white/5 border border-white/10">
                         <h3 class="text-lg font-semibold text-white mb-4">Vista del Logo</h3>
                         <div class="flex justify-center">
-                            <img src="{{ asset($logo->image_path) }}" alt="{{ $logo->name ?? 'Logo' }}" class="max-w-md h-auto rounded-lg border border-white/20 shadow-lg">
+                            <img src="{{ $imageUrl }}" alt="{{ $logo->name ?? 'Logo' }}" class="max-w-md h-auto rounded-lg border border-white/20 shadow-lg">
                         </div>
                     </div>
+                @else
+                    <p class="text-sm text-amber-200">Archivo no disponible</p>
+                @endif
+
+                @if($hasOriginal)
+                    <a href="{{ route('admin.logos.original', $logo) }}" class="auth-form-link">Descargar archivo original</a>
+                @else
+                    <p class="text-sm text-white/70">Original sin archivar</p>
                 @endif
 
                 {{-- Información Básica --}}
@@ -90,7 +98,7 @@
                 </div>
 
                 {{-- Acciones Rápidas --}}
-                @if(!$logo->is_active)
+                @if(!$logo->is_active && $imageUrl)
                     <div class="p-6 rounded-xl bg-white/5 border border-white/10">
                         <h3 class="text-lg font-semibold text-white mb-4">Acciones</h3>
                         <form method="POST" action="{{ route('admin.logos.activate', $logo) }}" class="inline">

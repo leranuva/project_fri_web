@@ -1,4 +1,5 @@
 import './bootstrap';
+import './components/theme-editor';
 import * as analytics from './analytics';
 
 // Exponer analytics globalmente para Alpine.js (Fase 8)

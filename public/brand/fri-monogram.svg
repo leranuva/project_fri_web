@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
+  <title id="title">FRI — Flat Rate Imports</title>
+  <desc id="description">Monograma marfil sobre verde profundo, con una línea dorada que termina en una flecha ascendente.</desc>
+  <rect x="2" y="2" width="124" height="124" rx="27" fill="#123B31"/>
+  <rect x="7" y="7" width="114" height="114" rx="22" fill="none" stroke="#668474" stroke-opacity=".55"/>
+  <g fill="#FFF5DF">
+    <path d="M22 34h25v8H31v10h14v8H31v15h-9z"/>
+    <path fill-rule="evenodd" d="M55 34h15c10 0 16 5 16 13 0 6-3 10-8 12l11 16H78L68 61h-4v14h-9zm9 8v11h6c4 0 7-2 7-6 0-3-3-5-7-5z"/>
+    <path d="M97 34h9v41h-9z"/>
+  </g>
+  <path d="M24 94h65l13-12m-9 0h9v9" fill="none" stroke="#E1AF6D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

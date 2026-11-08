@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Theme extends Model
 {
@@ -27,26 +28,37 @@ class Theme extends Model
     {
         return [
             'is_active' => 'boolean',
+            'published_at' => 'immutable_datetime',
         ];
     }
 
-    /**
-     * Get the active theme.
-     */
-    public static function getActive()
+    public static function getActive(): ?self
     {
-        return static::where('is_active', true)->first();
+        return static::where('is_active', true)->orderBy('id')->first();
     }
 
-    /**
-     * Activate this theme (deactivates all others).
-     */
-    public function activate()
+    public static function lockForPublication(): void
     {
-        // Deactivate all themes
-        static::where('is_active', true)->update(['is_active' => false]);
-        
-        // Activate this theme
-        $this->update(['is_active' => true]);
+        static::orderBy('id')->lockForUpdate()->get(['id']);
+    }
+
+    public function activate(): void
+    {
+        DB::transaction(function (): void {
+            static::lockForPublication();
+            $theme = static::findOrFail($this->getKey());
+            if ($theme->is_active) {
+                return;
+            }
+
+            static::where('is_active', true)->update(['is_active' => false]);
+            // Bind the timestamp explicitly to retain microseconds for restore ordering.
+            static::whereKey($theme->getKey())->update([
+                'is_active' => true,
+                'published_at' => now()->format('Y-m-d H:i:s.u'),
+            ]);
+        }, 3);
+
+        $this->refresh();
     }
 }

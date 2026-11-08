@@ -63,13 +63,14 @@
                     </thead>
                     <tbody>
                         @forelse($logos as $logo)
+                    @php($imageUrl = $logo->imageUrl())
                             <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
                                 <td class="py-3 px-4 text-white/90">{{ $logo->id }}</td>
                                 <td class="py-3 px-4">
-                                    @if($logo->image_path)
-                                        <img src="{{ asset($logo->image_path) }}" alt="{{ $logo->name ?? 'Logo' }}" class="h-10 w-auto object-contain max-w-[100px]" loading="lazy">
+                                    @if($imageUrl)
+                                        <img src="{{ $imageUrl }}" alt="{{ $logo->name ?? 'Logo' }}" class="h-10 w-auto object-contain max-w-[100px]" loading="lazy">
                                     @else
-                                        <span class="text-white/50 text-sm">Sin imagen</span>
+                                        <span class="text-white/50 text-sm">Archivo no disponible</span>
                                     @endif
                                 </td>
                                 <td class="py-3 px-4 text-white/90">{{ $logo->name ?? 'Sin nombre' }}</td>
@@ -99,7 +100,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
                                         </a>
-                                        @if(!$logo->is_active)
+                                        @if(!$logo->is_active && $imageUrl)
                                             <form method="POST" action="{{ route('admin.logos.activate', $logo) }}" class="inline">
                                                 @csrf
                                                 <button type="submit" class="p-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 text-green-300 hover:text-green-200 transition-all duration-200" title="Activar">
@@ -139,9 +140,9 @@
                                                     {{ __('Esta acción no se puede deshacer y la imagen se eliminará permanentemente.') }}
                                                 </p>
                                                 
-                                                @if($logo->image_path)
+                                                @if($imageUrl)
                                                     <div class="mb-4 flex justify-center">
-                                                        <img src="{{ asset($logo->image_path) }}" alt="{{ $logo->name ?? 'Logo' }}" class="h-20 w-auto object-contain">
+                                                        <img src="{{ $imageUrl }}" alt="{{ $logo->name ?? 'Logo' }}" class="h-20 w-auto object-contain">
                                                     </div>
                                                 @endif
                                                 
@@ -184,12 +185,15 @@
             {{-- Vista de cards para móvil --}}
             <div class="md:hidden space-y-4">
                 @forelse($logos as $logo)
+                    @php($imageUrl = $logo->imageUrl())
                     <div class="user-card-mobile p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-1">
                                 <h3 class="text-lg font-semibold text-white mb-1">{{ $logo->name ?? 'Sin nombre' }}</h3>
-                                @if($logo->image_path)
-                                    <img src="{{ asset($logo->image_path) }}" alt="{{ $logo->name ?? 'Logo' }}" class="h-12 w-auto object-contain mt-2">
+                                @if($imageUrl)
+                                    <img src="{{ $imageUrl }}" alt="{{ $logo->name ?? 'Logo' }}" class="h-12 w-auto object-contain mt-2">
+                                @else
+                                    <p class="mt-2 text-sm text-amber-200">Archivo no disponible</p>
                                 @endif
                             </div>
                             @if($logo->is_active)
@@ -232,7 +236,7 @@
                                 </svg>
                                 <span>Editar</span>
                             </a>
-                            @if(!$logo->is_active)
+                            @if(!$logo->is_active && $imageUrl)
                                 <form method="POST" action="{{ route('admin.logos.activate', $logo) }}" class="flex-1">
                                     @csrf
                                     <button type="submit" class="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 text-green-300 hover:text-green-200 transition-all duration-200 text-sm font-medium">
@@ -269,9 +273,9 @@
                                         {{ __('¿Estás seguro de que deseas eliminar este logo?') }}
                                         {{ __('Esta acción no se puede deshacer y la imagen se eliminará permanentemente.') }}
                                     </p>
-                                    @if($logo->image_path)
+                                    @if($imageUrl)
                                         <div class="mb-4 flex justify-center">
-                                            <img src="{{ asset($logo->image_path) }}" alt="{{ $logo->name ?? 'Logo' }}" class="h-20 w-auto object-contain">
+                                            <img src="{{ $imageUrl }}" alt="{{ $logo->name ?? 'Logo' }}" class="h-20 w-auto object-contain">
                                         </div>
                                     @endif
                                     <form method="POST" action="{{ route('admin.logos.destroy', $logo) }}" class="delete-modal-form">

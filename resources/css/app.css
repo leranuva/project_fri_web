@@ -3,7 +3,40 @@
 @tailwind utilities;
 
 /* ==================== TEMA DINÁMICO - Variables CSS ==================== */
-/* Estas variables se definen en los layouts y se aplican aquí */
+.theme-page,
+.theme-preview {
+    background: linear-gradient(135deg, var(--theme-background-gradient-start) 0%, var(--theme-background-gradient-mid) 50%, var(--theme-background-gradient-end) 100%);
+}
+
+.theme-page {
+    min-height: 100vh;
+}
+
+.theme-surface {
+    background-color: rgba(255, 255, 255, 0.1);
+    background-color: color-mix(in srgb, var(--theme-secondary-color) 10%, rgba(255, 255, 255, 0.1));
+}
+
+.theme-nav-active {
+    border-bottom: 2px solid var(--theme-primary-color);
+}
+
+.theme-focus:focus-visible,
+.glass-button.theme-focus:focus-visible {
+    outline: 2px solid var(--theme-accent-color);
+    outline-offset: 4px;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111827;
+}
+
+.theme-preview[data-size="mobile"] {
+    max-width: 22rem;
+}
+
+.theme-preview[data-size="mobile"] .theme-preview-nav {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .theme-text-primary {
     color: var(--theme-text-color, white) !important;
 }
@@ -22,16 +55,15 @@
     opacity: 0.9;
 }
 
-/* Clases para sobrescribir Tailwind text-white con variables del tema */
-/* Usar @layer utilities para que tenga la misma especificidad que Tailwind */
+/* Compatibilidad con las vistas que aún usan utilidades Tailwind para texto temático. */
 @layer utilities {
-    .text-white {
+    :where([data-theme-legacy]) .text-white:not(:where([data-theme-explicit], [data-theme-explicit] *)) {
         color: var(--theme-text-color, white) !important;
     }
     
     /* Sobrescribir text-white con opacidades usando variables del tema */
-    .text-white\/80,
-    .text-white\/90 {
+    :where([data-theme-legacy]) .text-white\/80:not(:where([data-theme-explicit], [data-theme-explicit] *)),
+    :where([data-theme-legacy]) .text-white\/90:not(:where([data-theme-explicit], [data-theme-explicit] *)) {
         color: var(--theme-text-secondary-color, rgba(255, 255, 255, 0.8)) !important;
     }
 }
@@ -187,23 +219,31 @@ body > .modal-container {
 }
 
 .logo-icon {
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: white;
-    border-radius: 50%;
-    padding: 2px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    --brand-logo-size: 68px;
 }
 
-.logo-icon img {
-    width: calc(100% - 4px);
-    height: calc(100% - 4px);
-    object-fit: contain;
+.logo-icon,
+.footer-logo {
+    --brand-logo-padding: 4px;
+    /* Limita la imagen al cuadrado que cabe dentro del círculo. */
+    --brand-logo-image-size: min(calc(var(--brand-logo-size) - 2 * var(--brand-logo-padding)), calc(var(--brand-logo-size) * 0.7071));
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--brand-logo-size);
+    height: var(--brand-logo-size);
+    padding: var(--brand-logo-padding);
+    background-color: white;
+    border-radius: 50%;
+}
+
+.logo-icon img,
+.footer-logo img {
     display: block;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    width: var(--brand-logo-image-size);
+    height: var(--brand-logo-image-size);
+    object-fit: contain;
 }
 
 .brand-text {
@@ -663,19 +703,7 @@ body > .modal-container {
     }
 
     .logo-icon {
-        width: 50px;
-        height: 50px;
-        background-color: white;
-        border-radius: 50%;
-        padding: 2px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
-    
-    .logo-icon img {
-        width: calc(100% - 4px);
-        height: calc(100% - 4px);
-        object-fit: contain;
-        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+        --brand-logo-size: 56px;
     }
 
     .brand-text {
@@ -767,23 +795,7 @@ body > .modal-container {
 }
 
 .footer-logo {
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: white;
-    border-radius: 50%;
-    padding: 2px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.footer-logo img {
-    width: calc(100% - 4px);
-    height: calc(100% - 4px);
-    object-fit: contain;
-    display: block;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    --brand-logo-size: 52px;
 }
 
 .footer-links {
@@ -827,7 +839,7 @@ body > .modal-container {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.social-link:hover {
+a.social-link:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
@@ -839,7 +851,7 @@ body > .modal-container {
     color: white;
 }
 
-.social-link.social-tiktok:hover {
+a.social-link.social-tiktok:hover {
     background: #161823;
     border-color: #161823;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
@@ -852,7 +864,7 @@ body > .modal-container {
     color: white;
 }
 
-.social-link.social-facebook:hover {
+a.social-link.social-facebook:hover {
     background: #166FE5;
     border-color: #166FE5;
     box-shadow: 0 8px 20px rgba(24, 119, 242, 0.4);
@@ -865,7 +877,7 @@ body > .modal-container {
     color: white;
 }
 
-.social-link.social-instagram:hover {
+a.social-link.social-instagram:hover {
     background: linear-gradient(45deg, #e0852e 0%, #d55d31 25%, #d12238 50%, #c11e5b 75%, #ad1573 100%);
     box-shadow: 0 8px 20px rgba(188, 24, 136, 0.4);
 }
@@ -877,7 +889,7 @@ body > .modal-container {
     color: white;
 }
 
-.social-link.social-whatsapp-business:hover {
+a.social-link.social-whatsapp-business:hover {
     background: #20BA5A;
     border-color: #20BA5A;
     box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
@@ -2950,11 +2962,26 @@ select.auth-form-input option:hover {
     }
 }
 
+@media (max-width: 640px) {
+    .public-contact-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .public-contact-actions :is(.messenger-float, .whatsapp-float) {
+        position: relative;
+        inset: auto;
+        z-index: auto;
+    }
+}
+
 /* ==================== HERO SLIDER ==================== */
 .hero-slider {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     border: none;
-    width: 100vw;
+    width: 100%;
     height: 70vh;
     position: relative;
 }

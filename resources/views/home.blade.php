@@ -1,32 +1,28 @@
 <x-guest-layout>
     <div class="min-h-screen flex flex-col" style="padding-top: 0;">
-        {{-- Hero Section con Slider --}}
-        <section class="text-white" style="background: transparent; padding-top: 0; padding-bottom: 0;">
-            {{-- Hero Slider --}}
-            <div class="mb-8 sm:mb-12">
-                <x-hero-slider :sliders="$sliders" />
-            </div>
-            
+        <section data-theme-explicit class="theme-text-primary text-center py-8 sm:py-14">
             <x-ui.container>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a 
-                        href="{{ route('register') }}"
-                        class="glass-button glass-button-lg glass-button-full"
-                    >
-                        Registrarse Gratis
-                    </a>
-                    <a 
-                        href="{{ route('cotizador') }}"
-                        class="glass-button glass-button-lg glass-button-full"
-                    >
-                        Cotizar Ahora
+                <h1 class="mx-auto max-w-4xl text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight">
+                    Importa tus compras de EE. UU. a Ecuador
+                </h1>
+                <p class="mx-auto mt-4 max-w-2xl text-base sm:text-xl theme-text-secondary">
+                    Compra en tus tiendas favoritas, usa tu casillero gratuito en EE. UU. y recibe tus paquetes en Ecuador.
+                </p>
+                <div class="mt-6 flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
+                    <a href="{{ route('cotizador') }}" class="glass-button glass-button-lg theme-focus justify-center">Cotizar mi envío</a>
+                    <a href="{{ route('register') }}" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/50 px-5 py-3 font-semibold theme-text-primary theme-focus hover:bg-white/10">
+                        Obtener mi casillero gratis
                     </a>
                 </div>
             </x-ui.container>
         </section>
 
+        <div class="mb-8 sm:mb-12">
+            <x-hero-slider :sliders="$sliders" />
+        </div>
+
         {{-- Sección: ¿Cómo Funciona? --}}
-        <section id="como-funciona" class="py-12 sm:py-16 lg:py-20" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);">
+        <section id="como-funciona" class="theme-surface py-12 sm:py-16 lg:py-20 backdrop-blur-sm">
             <x-ui.container>
                 <div class="text-center mb-12">
                     <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-white">
@@ -479,8 +475,8 @@
                                             @endif
                                             @php
                                                 $ctaVisible = ($blogSection?->cta_button_visible ?? true) && ($post->cta_active ?? true);
-                                                $ctaUrl = ($post->cta_link && filter_var($post->cta_link, FILTER_VALIDATE_URL)) ? $post->cta_link : ($blogSection?->cta_button_url_base ?? config('seo.store_url'));
                                                 $ctaLabel = $post->cta_text ?: ($blogSection?->cta_button_text ?? 'Ir a la tienda');
+                                                $ctaUrl = $post->resolveCtaUrl($blogSection?->cta_button_url_base, $ctaLabel);
                                                 $ctaAnimated = $blogSection?->cta_button_animated ?? true;
                                             @endphp
                                             @if($ctaVisible)
