@@ -29,18 +29,12 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
-
-        if ($status == Password::RESET_LINK_SENT) {
-            return back()->with('status', 'Hemos enviado un enlace de restablecimiento de contraseña a tu correo electrónico.');
+        try {
+            Password::sendResetLink($request->only('email'));
+        } catch (\Symfony\Component\Mailer\Exception\TransportExceptionInterface) {
+            logger()->error('Falló el transporte del correo de recuperación.');
         }
 
-        return back()->withInput($request->only('email'))
-            ->withErrors(['email' => 'No pudimos encontrar un usuario con ese correo electrónico.']);
+        return back()->with('status', 'Si hay una cuenta asociada a ese correo, recibirás un enlace de restablecimiento.');
     }
 }

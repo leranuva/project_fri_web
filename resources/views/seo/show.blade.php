@@ -11,7 +11,7 @@
 
     <x-ui.container>
         <div class="prose prose-invert max-w-none text-white/90 mb-8">
-            {!! $page->content !!}
+            {!! \App\Support\CmsContent::html($page->content) !!}
         </div>
 
         {{-- Cotizador --}}

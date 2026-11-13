@@ -142,6 +142,33 @@ class CotizadorTest extends TestCase
         $this->assertEquals(15, $data['weight']);
     }
 
+    public function test_share_uses_the_server_calculated_total(): void
+    {
+        $quote = $this->postJson(route('cotizador.calculate'), [
+            'product' => 'Celulares_NuevosSolamente',
+            'quantity' => 1,
+            'weight' => 15,
+            'unitValue' => 200,
+            'shippingMethod' => 'maritimo',
+        ])->assertOk()->json('data');
+
+        $this->postJson(route('cotizador.share'), [
+            'quoteData' => ['productName' => 'Producto', 'totalCotizacion' => 0.01],
+        ])->assertUnprocessable();
+
+        $this->postJson(route('cotizador.share'), [
+            'shareToken' => $quote['shareToken'] . 'invalid',
+        ])->assertUnprocessable();
+
+        $share = $this->postJson(route('cotizador.share'), [
+            'shareToken' => $quote['shareToken'],
+            'quoteData' => ['totalCotizacion' => 0.01],
+        ])->assertOk();
+
+        $this->assertEquals($quote['totalCotizacion'],
+            \App\Models\QuoteShare::where('token', $share->json('token'))->firstOrFail()->quote_data['totalCotizacion']);
+    }
+
     public function test_calculate_rechaza_producto_invalido(): void
     {
         $response = $this->postJson('/api/cotizador/calculate', [

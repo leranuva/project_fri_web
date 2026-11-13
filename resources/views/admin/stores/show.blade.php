@@ -42,7 +42,7 @@
                         <div class="p-6 rounded-xl bg-white/10 border border-white/20 text-center">
                             @if($store->logo_url)
                                 <div class="mb-4 w-24 h-24 mx-auto flex items-center justify-center bg-white/10 rounded-lg p-2">
-                                    {!! $store->logo_url !!}
+                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($store->logo_url)) }}" alt="" class="max-w-full max-h-full">
                                 </div>
                             @else
                                 <div class="mb-4 w-24 h-24 mx-auto bg-white/10 rounded-lg flex items-center justify-center">

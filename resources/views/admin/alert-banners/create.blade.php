@@ -316,7 +316,10 @@
             const svgCode = e.target.value.trim();
             
             if (svgCode) {
-                previewContent.innerHTML = svgCode;
+                const previewImage = document.createElement("img");
+                previewImage.alt = "";
+                previewImage.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgCode);
+                previewContent.replaceChildren(previewImage);
                 preview.style.display = 'block';
             } else {
                 preview.style.display = 'none';

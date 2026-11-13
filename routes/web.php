@@ -102,7 +102,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Rutas de administración (requieren autenticación y rol admin)
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     Route::resource('products', \App\Http\Controllers\Admin\ProductController::class);
     Route::resource('shipping-rates', \App\Http\Controllers\Admin\ShippingRateController::class);

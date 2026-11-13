@@ -76,7 +76,7 @@
                         <div class="p-4 rounded-xl bg-white/5 border border-white/10">
                             <div class="flex items-center justify-center p-4 bg-white/10 rounded-lg mb-3">
                                 <div class="w-12 h-12 text-white">
-                                    {!! $footerLink->icon_svg !!}
+                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($footerLink->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                                 </div>
                             </div>
                             <pre class="text-xs text-white/70 font-mono overflow-x-auto"><code>{{ $footerLink->icon_svg }}</code></pre>

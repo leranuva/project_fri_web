@@ -57,7 +57,7 @@
                     @if($hasDestination) href="{{ $socialUrl }}" target="_blank" rel="noopener noreferrer"
                     @else role="img" @endif>
                     @if($social->icon_svg)
-                        {!! $social->icon_svg !!}
+                        <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($social->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                     @else
                         <svg class="social-icon" viewBox="0 0 24 24">
                             <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/>
@@ -70,7 +70,7 @@
     
     <div class="footer-copy">
         @if($showFooter && $footerSection->copyright_text)
-            {!! str_replace('{{ date(\'Y\') }}', date('Y'), $footerSection->copyright_text) !!}
+            {!! \App\Support\CmsContent::html(str_replace('{{ date(\'Y\') }}', date('Y'), $footerSection->copyright_text)) !!}
         @else
             © {{ date('Y') }} {{ $brandName }}. All rights reserved.
         @endif

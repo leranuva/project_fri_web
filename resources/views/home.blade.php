@@ -47,7 +47,7 @@
                                     <span class="text-2xl font-bold text-white">{{ $step->step_number }}</span>
                                 </div>
                                 <div class="flex items-center justify-center">
-                                    {!! $step->icon_svg !!}
+                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($step->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                                 </div>
                             </div>
                             <h3 class="text-xl font-semibold mb-2 text-white">{{ $step->title }}</h3>
@@ -158,7 +158,7 @@
                         <div class="text-center">
                             <div class="mb-6">
                                 <div class="flex items-center justify-center">
-                                    {!! $alertBanner->icon_svg !!}
+                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($alertBanner->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                                 </div>
                             </div>
                             <h2 
@@ -248,7 +248,7 @@
                         <x-ui.card glassmorphism="true" class="text-center benefit-card">
                             <div class="mb-4">
                                 <div class="flex items-center justify-center">
-                                    {!! $benefit->icon_svg !!}
+                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($benefit->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                                 </div>
                             </div>
                             <h3 
@@ -374,11 +374,11 @@
                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                 >
                                                 <div class="max-w-full max-h-full flex items-center justify-center store-logo-svg" style="display: none;">
-                                                    {!! $store->logo_url ?? '' !!}
+                                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($store->logo_url ?? '')) }}" alt="" class="max-w-full max-h-full">
                                                 </div>
                                             @elseif($store->logo_url)
                                                 <div class="max-w-full max-h-full flex items-center justify-center store-logo-svg">
-                                                    {!! $store->logo_url !!}
+                                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($store->logo_url)) }}" alt="" class="max-w-full max-h-full">
                                                 </div>
                                             @endif
                                         </a>

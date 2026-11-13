@@ -521,7 +521,7 @@
                             <h3 class="alert-modal-title">Validación</h3>
                             
                             {{-- Mensaje --}}
-                            <p class="alert-modal-message" x-html="alertMessage ? alertMessage.replace(/\n/g, '<br>') : 'Error desconocido'"></p>
+                            <p class="alert-modal-message whitespace-pre-line" x-text="alertMessage || 'Error desconocido'"></p>
                             
                             {{-- Botón de cierre --}}
                             <div class="alert-modal-actions">
@@ -953,16 +953,7 @@
                         const res = await fetch('{{ route("cotizador.share") }}', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                            body: JSON.stringify({
-                                quoteData: {
-                                    ...this.result,
-                                    product: this.formData.product,
-                                    productName: this.result.productName || this.result.product,
-                                    quantity: this.formData.quantity,
-                                    weight: this.result.weight,
-                                    shippingMethod: this.formData.shippingMethod
-                                }
-                            })
+                            body: JSON.stringify({ shareToken: this.result.shareToken })
                         });
                         const data = await res.json();
                         if (data.success && data.url) {
@@ -1246,24 +1237,11 @@
                     this.isGeneratingPDF = true;
                     
                     try {
-                        // Verificar y cargar jsPDF
-                        let jsPDF;
-                        if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
-                            jsPDF = window.jspdf.jsPDF;
-                        } else {
-                            // Cargar desde CDN como fallback
-                            await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-                            if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
-                                jsPDF = window.jspdf.jsPDF;
-                            } else {
-                                throw new Error('No se pudo cargar jsPDF desde CDN');
-                            }
-                        }
-                        
+                        const jsPDF = window.jspdf?.jsPDF;
                         if (typeof jsPDF !== 'function') {
-                            throw new Error(`jsPDF no es una función. Tipo: ${typeof jsPDF}`);
+                            throw new Error('No se pudo cargar la herramienta de PDF.');
                         }
-                        
+
                         if (!this.result) {
                             throw new Error('No hay datos de resultado disponibles');
                         }
@@ -1296,28 +1274,6 @@
                     this.selectedProductName = '';
                     this.showResult = false;
                     this.result = null;
-                },
-
-                loadScript(src) {
-                    return new Promise((resolve, reject) => {
-                        // Verificar si el script ya está cargado
-                        const existingScript = document.querySelector(`script[src="${src}"]`);
-                        if (existingScript) {
-                            resolve();
-                            return;
-                        }
-                        
-                        const script = document.createElement('script');
-                        script.src = src;
-                        script.async = true;
-                        script.onload = () => {
-                            resolve();
-                        };
-                        script.onerror = () => {
-                            reject(new Error(`No se pudo cargar el script: ${src}`));
-                        };
-                        document.head.appendChild(script);
-                    });
                 },
 
                 showError(message) {

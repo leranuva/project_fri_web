@@ -89,22 +89,29 @@ class CotizadorController extends Controller
             // Guardar lead (Fase 11)
             $this->saveLead($data, $quote);
 
+            $quote['shareToken'] = \Illuminate\Support\Facades\Crypt::encryptString(json_encode([
+                'purpose' => 'quote-share',
+                'expires' => now()->addHour()->timestamp,
+                'quote' => [
+                    'productName' => $quote['productName'],
+                    'quantity' => $quote['quantity'],
+                    'weight' => $quote['weight'],
+                    'shippingMethod' => $data['shippingMethod'],
+                    'totalCotizacion' => $quote['totalCotizacion'],
+                ],
+            ], JSON_THROW_ON_ERROR));
+
             return response()->json([
                 'success' => true,
                 'data' => $quote
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Cotizador calculate error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'input' => $request->validated(),
-            ]);
+            Log::error('No se pudo calcular la cotización', ['exception_type' => $e::class]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al calcular la cotización: ' . $e->getMessage(),
-                'errors' => [$e->getMessage()]
+                'message' => 'No se pudo calcular la cotización. Intenta de nuevo.',
             ], 500);
         }
     }
@@ -180,7 +187,7 @@ class CotizadorController extends Controller
                 'details' => $quote,
             ]);
         } catch (\Throwable $e) {
-            \Log::warning('No se pudo guardar cotización en historial: ' . $e->getMessage());
+            \Log::warning('No se pudo guardar cotización en historial', ['exception_type' => $e::class]);
         }
     }
 
@@ -224,7 +231,7 @@ class CotizadorController extends Controller
                 event(new LeadCreated($lead));
             }
         } catch (\Throwable $e) {
-            Log::warning('No se pudo guardar lead: ' . $e->getMessage());
+            Log::warning('No se pudo guardar lead', ['exception_type' => $e::class]);
         }
     }
 }

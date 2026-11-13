@@ -39,32 +39,34 @@ class GoogleAuthController extends Controller
                 ->with('error', __('No se pudo iniciar sesión con Google. Intenta de nuevo.'));
         }
 
+        if (($googleUser->user['verified_email'] ?? false) !== true || ! $googleUser->getEmail() || ! $googleUser->getId()) {
+            return redirect()->route('login')
+                ->with('error', __('Google no confirmó el correo de esta cuenta.'));
+        }
+
         $user = User::where('google_id', $googleUser->getId())->first();
 
-        if ($user) {
-            $user->update([
-                'avatar' => $googleUser->getAvatar(),
-            ]);
-        } else {
-            $user = User::where('email', $googleUser->getEmail())->first();
-
-            if ($user) {
-                $user->update([
-                    'google_id' => $googleUser->getId(),
-                    'avatar' => $googleUser->getAvatar(),
-                    'email_verified_at' => $user->email_verified_at ?? now(),
-                ]);
-            } else {
-                $user = User::create([
+        if (! $user) {
+            $user = User::firstOrCreate(
+                ['email' => $googleUser->getEmail()],
+                [
                     'name' => $googleUser->getName(),
-                    'email' => $googleUser->getEmail(),
                     'google_id' => $googleUser->getId(),
-                    'avatar' => $googleUser->getAvatar(),
-                    'email_verified_at' => now(),
                     'password' => null,
-                ]);
+                ]
+            );
+
+            if ((string) $user->google_id !== (string) $googleUser->getId()) {
+                return redirect()->route('login')
+                    ->with('error', __('Usa tu contraseña para iniciar sesión con tu cuenta existente.'));
             }
         }
+
+        $user->avatar = $googleUser->getAvatar();
+        if (! $user->hasVerifiedEmail() && strcasecmp($user->email, $googleUser->getEmail()) === 0) {
+            $user->email_verified_at = now();
+        }
+        $user->save();
 
         Auth::login($user, true);
 

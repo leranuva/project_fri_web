@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\QuoteShare;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,18 +16,27 @@ class QuoteShareController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'quoteData' => 'required|array',
-            'quoteData.productName' => 'required|string',
-            'quoteData.totalCotizacion' => 'required|numeric',
-        ]);
+        $input = $request->validate(['shareToken' => 'required|string|max:8192']);
+
+        try {
+            $payload = json_decode(Crypt::decryptString($input['shareToken']), true);
+        } catch (DecryptException) {
+            abort(422, 'La cotización no es válida.');
+        }
+
+        abort_unless(
+            ($payload['purpose'] ?? null) === 'quote-share'
+                && ($payload['expires'] ?? 0) >= now()->timestamp && is_array($payload['quote'] ?? null),
+            422,
+            'Vuelve a calcular la cotización para compartirla.'
+        );
 
         $token = QuoteShare::generateToken();
         $expiresAt = now()->addDays(30);
 
         QuoteShare::create([
             'token' => $token,
-            'quote_data' => $request->input('quoteData'),
+            'quote_data' => $payload['quote'],
             'expires_at' => $expiresAt,
         ]);
 
@@ -51,7 +62,8 @@ class QuoteShareController extends Controller
 
         return view('quote.share', [
             'share' => $share,
-            'quoteData' => $share->quote_data,
+            'quoteData' => array_filter($share->quote_data ?? [], 'is_scalar'),
+            'serverCalculated' => str_starts_with($share->token, 'v2_'),
         ]);
     }
 }
