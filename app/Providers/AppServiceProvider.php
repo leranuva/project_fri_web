@@ -72,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Cotizador: 30 cálculos por minuto por IP
         RateLimiter::for('registration', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+        RateLimiter::for('tracking', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
 
         RateLimiter::for('calculate-quotes', function (Request $request) {
             return Limit::perMinute(30)->by($request->ip());
