@@ -100,6 +100,8 @@ class TaxCalculatorTest extends TestCase
 
     public function test_impuestos_porcentuales_usan_base_producto_mas_envio(): void
     {
+        config(['products.taxes.iva' => 0.12, 'products.taxes.fodinfa' => 0.005]);
+
         $result = $this->calculator->calculate(
             productCost: 100,
             shippingCost: 50,
