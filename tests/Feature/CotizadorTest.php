@@ -97,6 +97,19 @@ class CotizadorTest extends TestCase
         }
     }
 
+    public function test_cotizador_loads_the_pdf_script(): void
+    {
+        file_put_contents($hotFile = tempnam(sys_get_temp_dir(), "fri-vite-"), "http://localhost:5173");
+
+        try {
+            $this->app[\Illuminate\Foundation\Vite::class]->useHotFile($hotFile);
+            $this->get("/cotizador")->assertOk()
+                ->assertSee("http://localhost:5173/resources/js/cotizador-alpine.js", false);
+        } finally {
+            unlink($hotFile);
+        }
+    }
+
     public function test_get_products_retorna_lista(): void
     {
         $response = $this->getJson('/api/cotizador/products');

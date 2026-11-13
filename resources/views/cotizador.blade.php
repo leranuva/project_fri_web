@@ -11,6 +11,10 @@
     }
 @endphp
 
+@push('scripts')
+    @vite(['resources/js/cotizador-alpine.js'])
+@endpush
+
 <x-app-layout seo-title="Cotizador de importaciones de EE. UU. a Ecuador | Flat Rate Imports">
     <x-slot name="styles">
         <style>
@@ -1287,7 +1291,3 @@
         }
     </script>
 </x-app-layout>
-
-@push('scripts')
-    @vite(['resources/js/cotizador-alpine.js'])
-@endpush
