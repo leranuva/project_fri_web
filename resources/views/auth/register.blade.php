@@ -108,6 +108,14 @@
                     />
                 </div>
 
+                @if (filled(config('services.turnstile.site_key')))
+                    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                    <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-action="register"></div>
+                @endif
+                @error('cf-turnstile-response')
+                    <div class="auth-error">{{ $message }}</div>
+                @enderror
+
                 {{-- Actions --}}
                 <div class="flex flex-col gap-4">
                     <button type="submit" class="auth-form-button">
