@@ -9,6 +9,7 @@ use App\Models\Lead;
 use App\Models\Product;
 use App\Models\Quote;
 use App\Models\ShippingRate;
+use App\Services\Cotizador\Catalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -20,84 +21,21 @@ class CotizadorController extends Controller
     /**
      * Mostrar la página del cotizador
      */
-    public function index()
+    public function index(Catalog $catalog)
     {
-        $products = $this->getCachedProducts();
-        $shippingMethods = $this->getCachedShippingMethods();
-        $shippingMethodRanges = $this->getCachedShippingRanges();
+        $products = $catalog->products();
+        ['shippingMethods' => $shippingMethods, 'shippingMethodRanges' => $shippingMethodRanges] = $catalog->shipping();
         $cotizadorSection = Cache::remember('cotizador.section', self::CACHE_TTL, fn () => \App\Models\CotizadorSection::getActive());
 
         return view('cotizador', compact('products', 'shippingMethods', 'shippingMethodRanges', 'cotizadorSection'));
     }
 
     /**
-     * Obtener productos con caché. No cachea resultados vacíos (evita caché obsoleta tras migrar/sembrar).
-     */
-    private function getCachedProducts()
-    {
-        $products = Cache::remember('cotizador.products', self::CACHE_TTL, function () {
-            return Product::active()->ordered()->get();
-        });
-        if ($products->isEmpty()) {
-            Cache::forget('cotizador.products');
-            return Product::active()->ordered()->get();
-        }
-        return $products;
-    }
-
-    /**
-     * Obtener métodos de envío con caché. No cachea resultados vacíos.
-     */
-    private function getCachedShippingMethods(): array
-    {
-        $methods = Cache::remember('cotizador.shipping_methods', self::CACHE_TTL, function () {
-            return ShippingRate::active()
-                ->select('method')
-                ->distinct()
-                ->pluck('method')
-                ->toArray();
-        });
-        if (empty($methods)) {
-            Cache::forget('cotizador.shipping_methods');
-            return ShippingRate::active()
-                ->select('method')
-                ->distinct()
-                ->pluck('method')
-                ->toArray();
-        }
-        return $methods;
-    }
-
-    /**
-     * Obtener rangos de envío con caché. No cachea resultados vacíos.
-     */
-    private function getCachedShippingRanges(): array
-    {
-        $ranges = Cache::remember('cotizador.shipping_ranges', self::CACHE_TTL, function () {
-            $methods = ShippingRate::active()->select('method')->distinct()->pluck('method')->toArray();
-            $result = [];
-            foreach ($methods as $method) {
-                $result[$method] = ShippingRate::getWeightRangesForMethod($method);
-            }
-            return $result;
-        });
-        if (empty($ranges)) {
-            Cache::forget('cotizador.shipping_ranges');
-            $methods = ShippingRate::active()->select('method')->distinct()->pluck('method')->toArray();
-            $ranges = [];
-            foreach ($methods as $method) {
-                $ranges[$method] = ShippingRate::getWeightRangesForMethod($method);
-            }
-        }
-        return $ranges;
-    }
-    
-    /**
      * Obtener métodos de envío activos (endpoint API)
      */
-    public function getActiveShippingMethods(): JsonResponse
+    public function getActiveShippingMethods(Catalog $catalog): JsonResponse
     {
-        $methods = $this->getCachedShippingMethods();
+        $methods = $catalog->shipping()['shippingMethods'];
 
         return response()->json([
             'success' => true,
@@ -175,11 +113,10 @@ class CotizadorController extends Controller
      * Obtener todos los datos del cotizador (productos, métodos, rangos)
      * Útil cuando los datos iniciales están vacíos (cache, BD recién migrada)
      */
-    public function getData(): JsonResponse
+    public function getData(Catalog $catalog): JsonResponse
     {
-        $products = $this->getCachedProducts();
-        $shippingMethods = $this->getCachedShippingMethods();
-        $shippingMethodRanges = $this->getCachedShippingRanges();
+        $products = $catalog->products();
+        ['shippingMethods' => $shippingMethods, 'shippingMethodRanges' => $shippingMethodRanges] = $catalog->shipping();
 
         $productsArray = [];
         foreach ($products as $product) {
@@ -203,9 +140,9 @@ class CotizadorController extends Controller
     /**
      * Obtener lista de productos (endpoint API)
      */
-    public function getProducts(): JsonResponse
+    public function getProducts(Catalog $catalog): JsonResponse
     {
-        $products = $this->getCachedProducts();
+        $products = $catalog->products();
 
         $formattedProducts = [];
         foreach ($products as $product) {

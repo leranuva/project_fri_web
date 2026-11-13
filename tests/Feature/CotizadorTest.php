@@ -40,6 +40,63 @@ class CotizadorTest extends TestCase
         ]);
     }
 
+    public function test_catalogo_refleja_activacion_de_productos_con_cache_caliente(): void
+    {
+        $product = Product::findByKey('Celulares_NuevosSolamente');
+        $product->update(['is_active' => false]);
+
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.products', []);
+
+        $product->update(['is_active' => true]);
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.products.Celulares_NuevosSolamente.name', 'Celulares Nuevos');
+
+        $newProduct = $product->replicate()->fill(['key' => 'Nuevo', 'is_active' => false]);
+        $newProduct->save();
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonMissingPath('data.products.Nuevo');
+
+        $newProduct->update(['is_active' => true]);
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.products.Nuevo.name', 'Celulares Nuevos');
+    }
+
+    public function test_catalogo_actualiza_rangos_y_metodos_al_editar_tarifas(): void
+    {
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.shippingMethodRanges.maritimo.max_weight', 99);
+
+        $rate = ShippingRate::forMethod('maritimo')->firstOrFail();
+        $rate->update(['max_weight' => null]);
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.shippingMethodRanges.maritimo.has_unlimited', true)
+            ->assertJsonPath('data.shippingMethodRanges.maritimo.ranges.0.max', null);
+
+        $rate->update(['is_active' => false]);
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonMissingPath('data.shippingMethodRanges.maritimo');
+    }
+
+    public function test_formulario_y_widget_renderizan_el_catalogo(): void
+    {
+        $this->withoutVite();
+
+        foreach (['/cotizador', '/embed/cotizador'] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertViewHas('shippingMethods', fn (array $methods) => in_array('maritimo', $methods, true))
+                ->assertViewHas('products', fn ($products) => $products->contains('key', 'Celulares_NuevosSolamente'));
+        }
+    }
+
     public function test_get_products_retorna_lista(): void
     {
         $response = $this->getJson('/api/cotizador/products');
