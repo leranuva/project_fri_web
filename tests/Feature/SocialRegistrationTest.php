@@ -108,4 +108,29 @@ class SocialRegistrationTest extends TestCase
         $this->assertGuest();
         $this->assertNull($user->fresh()->google_id);
     }
+
+    public function test_existing_admin_can_link_google_from_a_confirmed_session(): void
+    {
+        config(['services.google.client_id' => 'test', 'services.google.client_secret' => 'test']);
+        $user = User::factory()->create(['role' => 'admin', 'email' => 'admin@gmail.com']);
+
+        $this->actingAs($user)->get(route('profile.google.link'))
+            ->assertRedirect(route('password.confirm'));
+
+        Socialite::shouldReceive('driver->redirect')->once()->andReturn(redirect('https://accounts.google.com/'));
+        Socialite::shouldReceive('driver->user')->twice()->andReturn(
+            (new SocialUser)->setRaw(['verified_email' => true])->map([
+                'id' => 'google-admin', 'email' => $user->email,
+            ])
+        );
+
+        $this->withSession(['auth.password_confirmed_at' => time()])->get(route('profile.google.link'))
+            ->assertRedirect('https://accounts.google.com/');
+        $this->get(route('auth.google.callback'))->assertRedirect(route('profile.edit'));
+        $this->assertSame('google-admin', $user->fresh()->google_id);
+
+        $this->post(route('logout'));
+        $this->get(route('auth.google.callback'))->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($user);
+    }
 }
