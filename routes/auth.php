@@ -23,11 +23,11 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
-    foreach (['google' => 'google', 'x' => 'twitter'] as $slug => $provider) {
+    foreach (['google' => 'google', 'x' => 'twitter', 'facebook' => 'facebook', 'apple' => 'apple'] as $slug => $provider) {
         Route::get("auth/{$slug}", [\App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
             ->defaults('provider', $provider)->name("auth.{$slug}.redirect");
 
-        Route::get("auth/{$slug}/callback", [\App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
+        Route::match([$provider === 'apple' ? 'POST' : 'GET'], "auth/{$slug}/callback", [\App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
             ->defaults('provider', $provider)->name("auth.{$slug}.callback");
     }
 

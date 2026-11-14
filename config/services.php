@@ -43,6 +43,21 @@ return [
         'api_key' => env('TRACKINGMORE_API_KEY'),
     ],
 
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+        'client_secret' => '',
+        'team_id' => env('APPLE_TEAM_ID'),
+        'key_id' => env('APPLE_KEY_ID'),
+        'private_key' => env('APPLE_PRIVATE_KEY_PATH'),
+        'redirect' => env('APPLE_REDIRECT_URI') ?: rtrim(env('APP_URL', 'http://localhost'), '/') . '/auth/apple/callback',
+    ],
+
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI') ?: rtrim(env('APP_URL', 'http://localhost'), '/') . '/auth/facebook/callback',
+    ],
+
     'twitter' => [
         'oauth' => 2,
         'client_id' => env('X_CLIENT_ID'),

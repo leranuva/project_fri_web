@@ -16,6 +16,10 @@
             @php
                 $googleEnabled = config('services.google.client_id') && config('services.google.client_secret');
                 $xEnabled = config('services.twitter.client_id') && config('services.twitter.client_secret');
+                $additionalProviders = array_filter([
+                    'apple' => 'Continuar con Apple',
+                    'facebook' => 'Continuar con Facebook',
+                ], fn ($slug) => \App\Http\Controllers\Auth\SocialAuthController::enabled($slug), ARRAY_FILTER_USE_KEY);
             @endphp
 
             @if ($googleEnabled)
@@ -32,7 +36,10 @@
             @if ($xEnabled)
                 <a href="{{ route('auth.x.redirect') }}" class="auth-form-google-button">Continuar con X</a>
             @endif
-            @if ($googleEnabled || $xEnabled)
+            @foreach ($additionalProviders as $slug => $label)
+                <a href="{{ route("auth.{$slug}.redirect") }}" class="auth-form-google-button">{{ $label }}</a>
+            @endforeach
+            @if ($googleEnabled || $xEnabled || $additionalProviders)
                 <div class="auth-form-divider">
                     <span>{{ __('o regístrate con tu correo') }}</span>
                 </div>

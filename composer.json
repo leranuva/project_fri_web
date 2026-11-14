@@ -10,7 +10,8 @@
         "ezyang/htmlpurifier": "^4.18",
         "laravel/framework": "^12.0",
         "laravel/socialite": "^5.25",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "socialiteproviders/apple": "^6.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

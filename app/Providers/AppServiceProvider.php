@@ -36,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiting();
 
+        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+            $event->extendSocialite('apple', \SocialiteProviders\Apple\Provider::class);
+        });
+
         // Registrar listeners de eventos
         Event::listen(Verified::class, SendWelcomeEmail::class);
         Event::listen(LeadCreated::class, SendLeadToWebhook::class);

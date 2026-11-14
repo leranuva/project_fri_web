@@ -9,25 +9,48 @@ use Laravel\Socialite\Facades\Socialite;
 
 class SocialAuthController extends Controller
 {
+    public static function enabled(string $provider): bool
+    {
+        if (blank(config("services.{$provider}.client_id"))) {
+            return false;
+        }
+
+        if ($provider === 'apple') {
+            $key = config('services.apple.private_key');
+
+            return filled(config('services.apple.team_id')) && filled(config('services.apple.key_id'))
+                && is_string($key) && is_file($key) && is_readable($key);
+        }
+
+        return filled(config("services.{$provider}.client_secret"));
+    }
+
+    private function driver(string $provider)
+    {
+        $driver = Socialite::driver($provider);
+
+        return $provider === 'apple' ? $driver->stateless()->cookieNonce() : $driver;
+    }
+
     public function redirect(string $provider)
     {
-        if (! config("services.{$provider}.client_id") || ! config("services.{$provider}.client_secret")) {
+        if (! self::enabled($provider)) {
             return redirect()->route('login')
                 ->with('error', __('Este método de inicio de sesión no está configurado.'));
         }
 
-        return Socialite::driver($provider)->redirect();
+        return $this->driver($provider)->redirect();
     }
 
     public function callback(string $provider)
     {
-        if (! config("services.{$provider}.client_id") || ! config("services.{$provider}.client_secret")) {
+        if (! self::enabled($provider)) {
             return redirect()->route('login')
                 ->with('error', __('Este método de inicio de sesión no está configurado.'));
         }
 
         try {
-            $identity = Socialite::driver($provider)->user();
+            $identity = $this->driver($provider)->user();
         } catch (\Exception $e) {
             return redirect()->route('login')
                 ->with('error', __('No se pudo iniciar sesión. Intenta de nuevo.'));
@@ -42,7 +65,12 @@ class SocialAuthController extends Controller
                 ->with('error', __('El proveedor no compartió un correo confirmado. Puedes registrarte con tu correo.'));
         }
 
-        $identityColumn = $provider === 'google' ? 'google_id' : 'x_id';
+        $identityColumn = match ($provider) {
+            'google' => 'google_id',
+            'twitter' => 'x_id',
+            'apple' => 'apple_id',
+            'facebook' => 'facebook_id',
+        };
         $user = User::where($identityColumn, $subject)->first();
 
         if (! $user) {
@@ -61,8 +89,10 @@ class SocialAuthController extends Controller
             }
         }
 
-        $user->avatar = $identity->getAvatar();
-        $user->save();
+        if ($identity->getAvatar()) {
+            $user->avatar = $identity->getAvatar();
+            $user->save();
+        }
 
         Auth::login($user, true);
 
