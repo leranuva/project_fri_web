@@ -77,4 +77,35 @@ class SocialRegistrationTest extends TestCase
         $this->assertFalse($user->hasVerifiedEmail());
         Notification::assertSentTo($user, VerifyEmail::class);
     }
+
+    public function test_google_links_an_existing_verified_gmail_customer(): void
+    {
+        config(['services.google.client_id' => 'test', 'services.google.client_secret' => 'test']);
+        $user = User::factory()->create(['email' => 'ana@gmail.com']);
+        Socialite::shouldReceive('driver->user')->once()->andReturn(
+            (new SocialUser)->setRaw(['verified_email' => true])->map([
+                'id' => 'google-123', 'email' => $user->email,
+            ])
+        );
+
+        $this->get(route('auth.google.callback'))->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame('google-123', $user->fresh()->google_id);
+        $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_google_does_not_link_an_existing_admin(): void
+    {
+        config(['services.google.client_id' => 'test', 'services.google.client_secret' => 'test']);
+        $user = User::factory()->create(['email' => 'admin@gmail.com', 'role' => 'admin']);
+        Socialite::shouldReceive('driver->user')->once()->andReturn(
+            (new SocialUser)->setRaw(['verified_email' => true])->map([
+                'id' => 'google-123', 'email' => $user->email,
+            ])
+        );
+
+        $this->get(route('auth.google.callback'))->assertRedirect(route('login'));
+        $this->assertGuest();
+        $this->assertNull($user->fresh()->google_id);
+    }
 }

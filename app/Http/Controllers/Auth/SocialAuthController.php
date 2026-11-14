@@ -83,6 +83,17 @@ class SocialAuthController extends Controller
                 ]
             );
 
+            if ($provider === 'google' && $user->google_id === null && str_ends_with($email, '@gmail.com')) {
+                User::whereKey($user->getKey())
+                    ->where('email', $email)
+                    ->where('role', 'customer')
+                    ->whereNotNull('email_verified_at')
+                    ->whereNull('google_id')
+                    ->update(['google_id' => $subject]);
+
+                $user->refresh();
+            }
+
             if ((string) $user->{$identityColumn} !== $subject) {
                 return redirect()->route('login')
                     ->with('error', __('Usa tu contraseña para iniciar sesión con tu cuenta existente.'));
