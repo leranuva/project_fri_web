@@ -48,19 +48,17 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        event(new Registered($user));
+        try {
+            event(new Registered($user));
+            $status = 'verification-link-sent';
+        } catch (\Symfony\Component\Mailer\Exception\TransportExceptionInterface) {
+            logger()->error('Falló el transporte del correo de verificación.');
+            $status = 'verification-delivery-failed';
+        }
 
         Auth::login($user);
 
-        // Laravel envía automáticamente el correo de verificación cuando se dispara el evento Registered
-        // No es necesario llamar sendEmailVerificationNotification() manualmente
-        
-        // Redirigir a verificación de email si no está verificado
-        if (!$user->hasVerifiedEmail()) {
-            return redirect()->route('verification.notice');
-        }
-
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('verification.notice')->with('status', $status);
     }
     private function verifyTurnstile(Request $request): void
     {

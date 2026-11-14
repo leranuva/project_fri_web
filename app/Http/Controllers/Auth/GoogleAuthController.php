@@ -63,12 +63,15 @@ class GoogleAuthController extends Controller
         }
 
         $user->avatar = $googleUser->getAvatar();
-        if (! $user->hasVerifiedEmail() && strcasecmp($user->email, $googleUser->getEmail()) === 0) {
-            $user->email_verified_at = now();
-        }
         $user->save();
 
         Auth::login($user, true);
+
+        if (! $user->hasVerifiedEmail()) {
+            $status = app(\App\Services\EmailVerificationDelivery::class)->send($user);
+
+            return redirect()->route('verification.notice')->with('status', $status);
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
