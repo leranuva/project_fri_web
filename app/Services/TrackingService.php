@@ -431,43 +431,52 @@ class TrackingService
         return $map[strtolower($code)] ?? ucfirst($code);
     }
 
-    /**
-     * Crea o actualiza un paquete con la información obtenida
-     */
-    public function createOrUpdatePackage(string $trackingNumber, ?int $userId = null): Package
+    public function addPackage(string $trackingNumber, int $userId): Package
     {
-        $trackingInfo = $this->fetchTrackingInfo($trackingNumber);
-        
-        if (!$trackingInfo) {
-            // Si no se puede obtener información, crear un paquete básico
-            $trackingInfo = [
-                'tracking_number' => $trackingNumber,
-                'carrier' => $this->detectCarrier($trackingNumber) ?? 'Desconocido',
-                'status' => 'pending',
-                'description' => 'Información de tracking no disponible automáticamente',
-            ];
+        $existing = Package::findByTracking($trackingNumber);
+        if ($existing !== null) {
+            abort_unless((int) $existing->user_id === $userId, 404);
+
+            return $existing;
         }
 
-        $package = Package::updateOrCreate(
+        $package = Package::firstOrCreate(
             ['tracking_number' => $trackingNumber],
-            [
-                'user_id' => $userId,
-                'carrier' => $trackingInfo['carrier'] ?? null,
-                'status' => $trackingInfo['status'] ?? 'pending',
-                'origin' => $trackingInfo['origin'] ?? null,
-                'destination' => $trackingInfo['destination'] ?? null,
-                'description' => $trackingInfo['description'] ?? null,
-                'weight' => $trackingInfo['weight'] ?? null,
-                'value' => $trackingInfo['value'] ?? null,
-                'shipped_date' => isset($trackingInfo['shipped_date']) ? Carbon::parse($trackingInfo['shipped_date']) : null,
-                'estimated_delivery' => isset($trackingInfo['estimated_delivery']) ? Carbon::parse($trackingInfo['estimated_delivery']) : null,
-                'delivered_date' => isset($trackingInfo['delivered_date']) ? Carbon::parse($trackingInfo['delivered_date']) : null,
-                'tracking_history' => $trackingInfo['tracking_history'] ?? null,
-                'notes' => $trackingInfo['notes'] ?? null,
-            ]
+            ['user_id' => $userId, ...$this->trackingAttributes($trackingNumber)],
         );
+
+        abort_unless((int) $package->user_id === $userId, 404);
 
         return $package;
     }
-}
 
+    public function refreshPackage(Package $package, int $userId): void
+    {
+        abort_unless((int) $package->user_id === $userId, 404);
+        $attributes = $this->trackingAttributes($package->tracking_number);
+
+        $package->fill(array_filter($attributes, static fn ($value) => $value !== null));
+
+        Package::whereKey($package->id)->where('user_id', $userId)->update($package->getDirty());
+    }
+
+    private function trackingAttributes(string $trackingNumber): array
+    {
+        $info = $this->fetchTrackingInfo($trackingNumber) ?? [];
+
+        return [
+            'carrier' => $info['carrier'] ?? $this->detectCarrier($trackingNumber),
+            'status' => $info['status'] ?? 'pending',
+            'origin' => $info['origin'] ?? null,
+            'destination' => $info['destination'] ?? null,
+            'description' => $info['description'] ?? null,
+            'weight' => $info['weight'] ?? null,
+            'value' => $info['value'] ?? null,
+            'shipped_date' => isset($info['shipped_date']) ? Carbon::parse($info['shipped_date']) : null,
+            'estimated_delivery' => isset($info['estimated_delivery']) ? Carbon::parse($info['estimated_delivery']) : null,
+            'delivered_date' => isset($info['delivered_date']) ? Carbon::parse($info['delivered_date']) : null,
+            'tracking_history' => $info['tracking_history'] ?? null,
+            'notes' => $info['notes'] ?? null,
+        ];
+    }
+}

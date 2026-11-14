@@ -2,12 +2,26 @@
 
 namespace App\Models;
 
+use App\Services\Cotizador\Catalog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Product extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        $invalidateCatalog = static function (self $model): void {
+            $model->getConnection()->afterCommit(
+                static fn () => Cache::forget(Catalog::PRODUCTS_CACHE_KEY)
+            );
+        };
+
+        static::saved($invalidateCatalog);
+        static::deleted($invalidateCatalog);
+    }
 
     protected $fillable = [
         'key',

@@ -33,7 +33,7 @@ class PackageHistoryController extends Controller
         ]);
 
         $trackingNumber = trim($request->tracking_number);
-        $package = $this->trackingService->createOrUpdatePackage($trackingNumber, auth()->id());
+        $package = $this->trackingService->addPackage($trackingNumber, auth()->id());
 
         return redirect()
             ->route('packages.show', $package->tracking_number)
@@ -61,8 +61,7 @@ class PackageHistoryController extends Controller
             ->where('tracking_number', $trackingNumber)
             ->firstOrFail();
 
-        $this->trackingService->createOrUpdatePackage($trackingNumber, auth()->id());
-        $package->refresh();
+        $this->trackingService->refreshPackage($package, auth()->id());
 
         return redirect()
             ->route('packages.show', $trackingNumber)

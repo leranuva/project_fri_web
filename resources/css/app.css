@@ -1179,6 +1179,10 @@ select.auth-form-input option:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+.auth-form-google-button + .auth-form-google-button {
+    margin-top: 0.75rem;
+}
+
 .auth-form-google-button:hover {
     background: #fff;
     transform: translateY(-2px);

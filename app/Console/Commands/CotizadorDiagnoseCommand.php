@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Product;
 use App\Models\ShippingRate;
+use App\Services\Cotizador\Catalog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
@@ -26,9 +27,10 @@ class CotizadorDiagnoseCommand extends Command
         }
 
         if ($this->option('clear')) {
-            Cache::forget('cotizador.products');
+            Cache::forget(Catalog::PRODUCTS_CACHE_KEY);
             Cache::forget('cotizador.shipping_methods');
             Cache::forget('cotizador.shipping_ranges');
+            Cache::forget(Catalog::SHIPPING_CACHE_KEY);
             $this->info('Caché del cotizador limpiada.');
         }
 

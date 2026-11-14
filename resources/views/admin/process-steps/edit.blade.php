@@ -105,7 +105,7 @@
                         <p class="text-sm text-white/70 mb-2">Vista previa del icono:</p>
                         <div class="flex items-center justify-center p-4 bg-white/10 rounded-lg">
                             <div id="preview_icon_content">
-                                {!! $processStep->icon_svg !!}
+                                <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($processStep->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                             </div>
                         </div>
                     </div>
@@ -184,7 +184,10 @@
             const svgCode = e.target.value.trim();
             
             if (svgCode) {
-                previewContent.innerHTML = svgCode;
+                const previewImage = document.createElement("img");
+                previewImage.alt = "";
+                previewImage.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgCode);
+                previewContent.replaceChildren(previewImage);
             }
         });
     </script>

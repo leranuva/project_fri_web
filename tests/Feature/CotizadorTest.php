@@ -40,6 +40,76 @@ class CotizadorTest extends TestCase
         ]);
     }
 
+    public function test_catalogo_refleja_activacion_de_productos_con_cache_caliente(): void
+    {
+        $product = Product::findByKey('Celulares_NuevosSolamente');
+        $product->update(['is_active' => false]);
+
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.products', []);
+
+        $product->update(['is_active' => true]);
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.products.Celulares_NuevosSolamente.name', 'Celulares Nuevos');
+
+        $newProduct = $product->replicate()->fill(['key' => 'Nuevo', 'is_active' => false]);
+        $newProduct->save();
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonMissingPath('data.products.Nuevo');
+
+        $newProduct->update(['is_active' => true]);
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.products.Nuevo.name', 'Celulares Nuevos');
+    }
+
+    public function test_catalogo_actualiza_rangos_y_metodos_al_editar_tarifas(): void
+    {
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.shippingMethodRanges.maritimo.max_weight', 99);
+
+        $rate = ShippingRate::forMethod('maritimo')->firstOrFail();
+        $rate->update(['max_weight' => null]);
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonPath('data.shippingMethodRanges.maritimo.has_unlimited', true)
+            ->assertJsonPath('data.shippingMethodRanges.maritimo.ranges.0.max', null);
+
+        $rate->update(['is_active' => false]);
+        $this->getJson('/api/cotizador/data')
+            ->assertOk()
+            ->assertJsonMissingPath('data.shippingMethodRanges.maritimo');
+    }
+
+    public function test_formulario_y_widget_renderizan_el_catalogo(): void
+    {
+        $this->withoutVite();
+
+        foreach (['/cotizador', '/embed/cotizador'] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertViewHas('shippingMethods', fn (array $methods) => in_array('maritimo', $methods, true))
+                ->assertViewHas('products', fn ($products) => $products->contains('key', 'Celulares_NuevosSolamente'));
+        }
+    }
+
+    public function test_cotizador_loads_the_pdf_script(): void
+    {
+        file_put_contents($hotFile = tempnam(sys_get_temp_dir(), "fri-vite-"), "http://localhost:5173");
+
+        try {
+            $this->app[\Illuminate\Foundation\Vite::class]->useHotFile($hotFile);
+            $this->get("/cotizador")->assertOk()
+                ->assertSee("http://localhost:5173/resources/js/cotizador-alpine.js", false);
+        } finally {
+            unlink($hotFile);
+        }
+    }
+
     public function test_get_products_retorna_lista(): void
     {
         $response = $this->getJson('/api/cotizador/products');
@@ -83,6 +153,33 @@ class CotizadorTest extends TestCase
         $data = $response->json('data');
         $this->assertGreaterThan(0, $data['totalCotizacion']);
         $this->assertEquals(15, $data['weight']);
+    }
+
+    public function test_share_uses_the_server_calculated_total(): void
+    {
+        $quote = $this->postJson(route('cotizador.calculate'), [
+            'product' => 'Celulares_NuevosSolamente',
+            'quantity' => 1,
+            'weight' => 15,
+            'unitValue' => 200,
+            'shippingMethod' => 'maritimo',
+        ])->assertOk()->json('data');
+
+        $this->postJson(route('cotizador.share'), [
+            'quoteData' => ['productName' => 'Producto', 'totalCotizacion' => 0.01],
+        ])->assertUnprocessable();
+
+        $this->postJson(route('cotizador.share'), [
+            'shareToken' => $quote['shareToken'] . 'invalid',
+        ])->assertUnprocessable();
+
+        $share = $this->postJson(route('cotizador.share'), [
+            'shareToken' => $quote['shareToken'],
+            'quoteData' => ['totalCotizacion' => 0.01],
+        ])->assertOk();
+
+        $this->assertEquals($quote['totalCotizacion'],
+            \App\Models\QuoteShare::where('token', $share->json('token'))->firstOrFail()->quote_data['totalCotizacion']);
     }
 
     public function test_calculate_rechaza_producto_invalido(): void
