@@ -44,7 +44,12 @@
                 <a href="{{ route('auth.x.redirect') }}" class="auth-form-google-button">Continuar con X</a>
             @endif
             @foreach ($additionalProviders as $slug => $label)
-                <a href="{{ route("auth.{$slug}.redirect") }}" class="auth-form-google-button">{{ $label }}</a>
+                <a href="{{ route("auth.{$slug}.redirect") }}" class="auth-form-google-button">
+                    @if ($slug === 'facebook')
+                        <x-auth.facebook-icon />
+                    @endif
+                    {{ $label }}
+                </a>
             @endforeach
             @if ($googleEnabled || $xEnabled || $additionalProviders)
                 <div class="auth-form-divider">
