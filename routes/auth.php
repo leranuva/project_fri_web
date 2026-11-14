@@ -23,11 +23,13 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
-    Route::get('auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])
-        ->name('auth.google.redirect');
+    foreach (['google' => 'google', 'x' => 'twitter'] as $slug => $provider) {
+        Route::get("auth/{$slug}", [\App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
+            ->defaults('provider', $provider)->name("auth.{$slug}.redirect");
 
-    Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])
-        ->name('auth.google.callback');
+        Route::get("auth/{$slug}/callback", [\App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
+            ->defaults('provider', $provider)->name("auth.{$slug}.callback");
+    }
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');

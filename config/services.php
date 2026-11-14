@@ -43,6 +43,13 @@ return [
         'api_key' => env('TRACKINGMORE_API_KEY'),
     ],
 
+    'twitter' => [
+        'oauth' => 2,
+        'client_id' => env('X_CLIENT_ID'),
+        'client_secret' => env('X_CLIENT_SECRET'),
+        'redirect' => env('X_REDIRECT_URI') ?: rtrim(env('APP_URL', 'http://localhost'), '/') . '/auth/x/callback',
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

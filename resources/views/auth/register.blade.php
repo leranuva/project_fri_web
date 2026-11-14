@@ -13,7 +13,12 @@
                 </div>
             @endif
 
-            @if (config('services.google.client_id'))
+            @php
+                $googleEnabled = config('services.google.client_id') && config('services.google.client_secret');
+                $xEnabled = config('services.twitter.client_id') && config('services.twitter.client_secret');
+            @endphp
+
+            @if ($googleEnabled)
                 <a href="{{ route('auth.google.redirect') }}" class="auth-form-google-button">
                     <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -23,6 +28,11 @@
                     </svg>
                     {{ __('Continuar con Google') }}
                 </a>
+            @endif
+            @if ($xEnabled)
+                <a href="{{ route('auth.x.redirect') }}" class="auth-form-google-button">Continuar con X</a>
+            @endif
+            @if ($googleEnabled || $xEnabled)
                 <div class="auth-form-divider">
                     <span>{{ __('o regístrate con tu correo') }}</span>
                 </div>
