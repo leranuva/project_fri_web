@@ -33,21 +33,22 @@
         <div class="footer-social">
             @foreach(($footerSocials ?? []) as $social)
                 @php
-                    $socialUrl = trim($social->url ?? '');
                     $socialClass = strtolower(str_replace(' ', '-', $social->label));
+                    $platformUrl = match ($socialClass) {
+                        'tiktok' => 'https://www.tiktok.com/',
+                        'facebook' => 'https://www.facebook.com/',
+                        'instagram' => 'https://www.instagram.com/',
+                        'whatsapp-business' => 'https://www.whatsapp.com/business/',
+                        default => null,
+                    };
+                    $socialUrl = $platformUrl ?? trim($social->url ?? '');
                     $socialScheme = strtolower(parse_url($socialUrl, PHP_URL_SCHEME) ?? '');
                     $socialPath = parse_url($socialUrl, PHP_URL_PATH);
-                    $hasDestination = filter_var($socialUrl, FILTER_VALIDATE_URL)
+                    $hasDestination = $platformUrl !== null || (
+                        filter_var($socialUrl, FILTER_VALIDATE_URL)
                         && in_array($socialScheme, ['https', 'http'], true)
-                        && (app()->environment('local') || trim($socialPath ?: '', '/') !== '');
-
-                    if (! $hasDestination && $socialClass === 'whatsapp-business') {
-                        $number = (string) config('app.whatsapp_number');
-                        if ($number !== '593999999999' && preg_match('/^[1-9][0-9]{7,14}$/D', $number)) {
-                            $socialUrl = 'https://wa.me/' . $number;
-                            $hasDestination = true;
-                        }
-                    }
+                        && (app()->environment('local') || trim($socialPath ?: '', '/') !== '')
+                    );
 
                     $label = $hasDestination ? $social->label : $social->label . ' (perfil pendiente)';
                     $tag = $hasDestination ? 'a' : 'span';
