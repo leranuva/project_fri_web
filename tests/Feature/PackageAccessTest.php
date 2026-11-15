@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Package;
+use App\Models\Slider;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -39,6 +40,20 @@ class PackageAccessTest extends TestCase
         $this->post(route('tracking.search'), ['tracking_number' => $number])->assertRedirect($result);
         $this->get($result)->assertOk()->assertSee($number)->assertSee('En Tránsito');
         Http::assertNothingSent();
+    }
+
+    public function test_maritime_slider_links_to_the_tracking_form(): void
+    {
+        $slider = new Slider([
+            'title' => 'Seguimiento de carga marítima LCL',
+            'cta' => 'Ver Estado de Carga',
+            'cta_link' => 'https://example.shopifypreview.com/blogs/news/articles?preview_key=example',
+        ]);
+
+        $this->view('components.hero-slider', ['sliders' => collect([$slider])])
+            ->assertSee('Ver Estado de Carga')
+            ->assertSee(ltrim(route('tracking.index', absolute: false), '/').'\\u0022', false)
+            ->assertDontSee('shopifypreview.com');
     }
 
     public function test_admin_can_register_and_update_a_public_tracking_history(): void

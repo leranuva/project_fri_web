@@ -30,7 +30,7 @@ class TrackingService
         // Patrones de detección de transportistas
         $patterns = [
             'USPS' => [
-                '/^9[0-9]{4}[0-9]{4}[0-9]{4}[0-9]{4}[0-9]{4}[0-9]{2}$/', // 22 dígitos
+                '/^9[0-9]{21}$/', // 22 dígitos
                 '/^[0-9]{4}[0-9]{4}[0-9]{4}[0-9]{4}[0-9]{4}[0-9]{4}$/', // 24 dígitos
                 '/^[A-Z]{2}[0-9]{9}[A-Z]{2}$/', // Formato estándar USPS
             ],

@@ -75,7 +75,7 @@ class LocalPublicSitePreviewSeeder extends Seeder
             ['Compra en Estados Unidos con facilidad', 'Recibe el pedido en Ecuador', 'Ver producto', 'https://flatrateimports.store/products/air-fryerninja-dz201-foodi-freidora-de-aire-6-en-1-dualzone'],
             ['Importaciones LCL', 'Comparte espacio en una carga consolidada', 'Ver cómo funciona', $lcl],
             ['Drones', 'Explora opciones de compra', 'Ver productos', 'https://www.amazon.com/s?k=drones'],
-            ['Seguimiento de carga marítima LCL', 'Consulta el estado de tu envío', 'Ver seguimiento', 'https://flatrateimports.store/apps/track-order'],
+            ['Seguimiento de carga marítima LCL', 'Consulta el estado de tu envío', 'Ver seguimiento', '/tracking'],
         ];
 
         Slider::whereIn('title', [

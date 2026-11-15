@@ -10,9 +10,6 @@
                 </p>
                 <div class="mt-6 flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
                     <a href="{{ route('cotizador') }}" class="glass-button glass-button-lg theme-focus justify-center">Cotizar mi envío</a>
-                    <a href="{{ route('register') }}" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/50 px-5 py-3 font-semibold theme-text-primary theme-focus hover:bg-white/10">
-                        Obtener mi casillero gratis
-                    </a>
                 </div>
             </x-ui.container>
         </section>
@@ -248,7 +245,21 @@
                         <x-ui.card glassmorphism="true" class="text-center benefit-card">
                             <div class="mb-4">
                                 <div class="flex items-center justify-center">
-                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($benefit->icon_svg)) }}" alt="" class="max-w-full max-h-full">
+                                    @php
+                                        $icon = preg_replace_callback('/<svg\b[^>]*>/i', static function (array $match): string {
+                                            $tag = $match[0];
+                                            $attributes = '';
+                                            if (! preg_match('/\sxmlns\s*=/', $tag)) {
+                                                $attributes .= ' xmlns="http://www.w3.org/2000/svg"';
+                                            }
+                                            if (! preg_match('/\scolor\s*=/', $tag)) {
+                                                $attributes .= ' color="#ffffff"';
+                                            }
+
+                                            return substr_replace($tag, $attributes, 4, 0);
+                                        }, (string) $benefit->icon_svg, 1);
+                                    @endphp
+                                    <img src="data:image/svg+xml;base64,{{ base64_encode($icon) }}" alt="" width="48" height="48" class="max-w-full">
                                 </div>
                             </div>
                             <h3 
