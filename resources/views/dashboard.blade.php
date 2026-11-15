@@ -247,6 +247,14 @@
                             @if(Auth::user()->role === 'admin')
                                 <div class="pt-3 mt-3 border-t border-white/10">
                                     <p class="text-xs font-semibold text-white/60 uppercase mb-2">Administración</p>
+                                    <a href="{{ route('admin.packages.index') }}" class="block p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-200 text-white text-sm font-medium mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                            </svg>
+                                            <span>Gestionar paquetes</span>
+                                        </div>
+                                    </a>
                                     <a href="{{ route('admin.users.index') }}" class="block p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-200 text-white text-sm font-medium mb-2">
                                         <div class="flex items-center gap-2">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Carbon\Carbon;
 
 class PackageController extends Controller
 {
@@ -56,7 +56,7 @@ class PackageController extends Controller
     {
         $validated = $request->validate([
             'user_id' => ['nullable', 'exists:users,id'],
-            'tracking_number' => ['required', 'string', 'max:100', 'unique:packages,tracking_number'],
+            'tracking_number' => ['required', 'string', 'min:3', 'max:100', 'regex:/\A[A-Za-z0-9-]+\z/', 'unique:packages,tracking_number'],
             'carrier' => ['nullable', 'string', 'max:100'],
             'status' => ['required', 'in:pending,in_transit,received,in_customs,delivered'],
             'origin' => ['nullable', 'string', 'max:255'],
@@ -68,6 +68,8 @@ class PackageController extends Controller
             'estimated_delivery' => ['nullable', 'date'],
             'delivered_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string'],
+            'event_description' => ['nullable', 'string', 'max:500'],
+            'event_location' => ['nullable', 'string', 'max:120'],
         ], [
             'tracking_number.required' => 'El número de tracking es obligatorio.',
             'tracking_number.unique' => 'Ya existe un paquete con este número de tracking.',
@@ -75,16 +77,7 @@ class PackageController extends Controller
             'status.in' => 'El estado seleccionado no es válido.',
         ]);
 
-        // Procesar tracking_history si se proporciona
-        $trackingHistory = null;
-        if ($request->filled('tracking_history')) {
-            $history = json_decode($request->input('tracking_history'), true);
-            if (is_array($history)) {
-                $trackingHistory = $history;
-            }
-        }
-
-        $package = Package::create([
+        Package::create([
             'user_id' => $validated['user_id'] ?? null,
             'tracking_number' => $validated['tracking_number'],
             'carrier' => $validated['carrier'] ?? null,
@@ -94,10 +87,10 @@ class PackageController extends Controller
             'description' => $validated['description'] ?? null,
             'weight' => $validated['weight'] ?? null,
             'value' => $validated['value'] ?? null,
-            'shipped_date' => $validated['shipped_date'] ? Carbon::parse($validated['shipped_date']) : null,
-            'estimated_delivery' => $validated['estimated_delivery'] ? Carbon::parse($validated['estimated_delivery']) : null,
-            'delivered_date' => $validated['delivered_date'] ? Carbon::parse($validated['delivered_date']) : null,
-            'tracking_history' => $trackingHistory,
+            'shipped_date' => $validated['shipped_date'] ?? null,
+            'estimated_delivery' => $validated['estimated_delivery'] ?? null,
+            'delivered_date' => $validated['delivered_date'] ?? null,
+            'tracking_history' => [$this->publicEvent($validated)],
             'notes' => $validated['notes'] ?? null,
         ]);
 
@@ -133,7 +126,7 @@ class PackageController extends Controller
 
         $validated = $request->validate([
             'user_id' => ['nullable', 'exists:users,id'],
-            'tracking_number' => ['required', 'string', 'max:100', Rule::unique('packages', 'tracking_number')->ignore($package->id)],
+            'tracking_number' => ['required', 'string', 'min:3', 'max:100', 'regex:/\A[A-Za-z0-9-]+\z/', Rule::unique('packages', 'tracking_number')->ignore($package->id)],
             'carrier' => ['nullable', 'string', 'max:100'],
             'status' => ['required', 'in:pending,in_transit,received,in_customs,delivered'],
             'origin' => ['nullable', 'string', 'max:255'],
@@ -145,6 +138,8 @@ class PackageController extends Controller
             'estimated_delivery' => ['nullable', 'date'],
             'delivered_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string'],
+            'event_description' => ['nullable', 'string', 'max:500'],
+            'event_location' => ['nullable', 'string', 'max:120'],
         ], [
             'tracking_number.required' => 'El número de tracking es obligatorio.',
             'tracking_number.unique' => 'Ya existe un paquete con este número de tracking.',
@@ -152,16 +147,7 @@ class PackageController extends Controller
             'status.in' => 'El estado seleccionado no es válido.',
         ]);
 
-        // Procesar tracking_history si se proporciona
-        $trackingHistory = $package->tracking_history;
-        if ($request->filled('tracking_history')) {
-            $history = json_decode($request->input('tracking_history'), true);
-            if (is_array($history)) {
-                $trackingHistory = $history;
-            }
-        }
-
-        $package->update([
+        $attributes = [
             'user_id' => $validated['user_id'] ?? null,
             'tracking_number' => $validated['tracking_number'],
             'carrier' => $validated['carrier'] ?? null,
@@ -171,15 +157,45 @@ class PackageController extends Controller
             'description' => $validated['description'] ?? null,
             'weight' => $validated['weight'] ?? null,
             'value' => $validated['value'] ?? null,
-            'shipped_date' => $validated['shipped_date'] ? Carbon::parse($validated['shipped_date']) : null,
-            'estimated_delivery' => $validated['estimated_delivery'] ? Carbon::parse($validated['estimated_delivery']) : null,
-            'delivered_date' => $validated['delivered_date'] ? Carbon::parse($validated['delivered_date']) : null,
-            'tracking_history' => $trackingHistory,
+            'shipped_date' => $validated['shipped_date'] ?? null,
+            'estimated_delivery' => $validated['estimated_delivery'] ?? null,
+            'delivered_date' => $validated['delivered_date'] ?? null,
             'notes' => $validated['notes'] ?? null,
-        ]);
+        ];
+
+        DB::transaction(function () use ($id, $attributes, $validated) {
+            $package = Package::lockForUpdate()->findOrFail($id);
+            if ($package->status !== $validated['status']
+                || ($validated['event_description'] ?? null) !== null
+                || ($validated['event_location'] ?? null) !== null) {
+                $history = $package->tracking_history ?? [];
+                $history[] = $this->publicEvent($validated);
+                $attributes['tracking_history'] = $history;
+            }
+            $package->update($attributes);
+        });
 
         return redirect()->route('admin.packages.index')
             ->with('success', 'Paquete actualizado exitosamente.');
+    }
+
+    private function publicEvent(array $data): array
+    {
+        $label = match ($data['status']) {
+            'pending' => 'Pendiente',
+            'in_transit' => 'En tránsito',
+            'received' => 'Recibido',
+            'in_customs' => 'En aduana',
+            'delivered' => 'Entregado',
+        };
+
+        return [
+            'public' => true,
+            'status' => $label,
+            'description' => $data['event_description'] ?? $label,
+            'location' => $data['event_location'] ?? '',
+            'date' => now()->toDateTimeString(),
+        ];
     }
 
     /**

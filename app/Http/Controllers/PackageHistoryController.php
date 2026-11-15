@@ -3,14 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
-use App\Services\TrackingService;
 
 class PackageHistoryController extends Controller
 {
-    public function __construct(
-        private TrackingService $trackingService
-    ) {}
-
     /**
      * Mostrar paquetes del usuario autenticado
      */
@@ -24,7 +19,7 @@ class PackageHistoryController extends Controller
     }
 
     /**
-     * Agregar paquete por número de tracking
+     * Consultar un paquete ya asignado al cliente por número de tracking
      */
     public function store(\Illuminate\Http\Request $request)
     {
@@ -33,11 +28,12 @@ class PackageHistoryController extends Controller
         ]);
 
         $trackingNumber = trim($request->tracking_number);
-        $package = $this->trackingService->addPackage($trackingNumber, auth()->id());
+        $package = Package::where('user_id', auth()->id())
+            ->where('tracking_number', $trackingNumber)
+            ->firstOrFail();
 
         return redirect()
-            ->route('packages.show', $package->tracking_number)
-            ->with('success', 'Paquete agregado correctamente.');
+            ->route('packages.show', $package->tracking_number);
     }
 
     /**
@@ -53,7 +49,7 @@ class PackageHistoryController extends Controller
     }
 
     /**
-     * Actualizar información del paquete desde la API
+     * Volver al estado registrado por el administrador
      */
     public function refresh(string $trackingNumber)
     {
@@ -61,10 +57,6 @@ class PackageHistoryController extends Controller
             ->where('tracking_number', $trackingNumber)
             ->firstOrFail();
 
-        $this->trackingService->refreshPackage($package, auth()->id());
-
-        return redirect()
-            ->route('packages.show', $trackingNumber)
-            ->with('success', 'Información actualizada.');
+        return redirect()->route('packages.show', $package->tracking_number);
     }
 }

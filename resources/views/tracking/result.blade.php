@@ -5,7 +5,7 @@
                 {{-- Botón para volver a buscar --}}
                 <div class="mb-6">
                     <a 
-                        href="{{ route('home') }}#tracking" 
+                        href="{{ route('tracking.index') }}"
                         class="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,9 +21,16 @@
                         <h1 class="text-3xl sm:text-4xl font-bold text-white mb-2">
                             Información del Paquete
                         </h1>
-                        <p class="text-white/80 text-lg">
-                            Número de tracking: <strong class="text-white">{{ $trackingNumber }}</strong>
-                        </p>
+                        <div class="text-white/80 text-lg" x-data="{ copied: false }">
+                            <p>Número de seguimiento</p>
+                            <strong class="text-white" x-ref="trackingNumber">{{ $trackingNumber }}</strong>
+                            <button type="button" class="ml-2 underline text-sm"
+                                x-on:click="navigator.clipboard.writeText($refs.trackingNumber.textContent).then(() => copied = true).catch(() => copied = false)"
+                                x-text="copied ? 'Copiado' : 'Copiar'">Copiar</button>
+                        </div>
+                        @if (!empty($carrier))
+                            <p class="mt-2 text-white/80">{{ $carrier }}</p>
+                        @endif
                     </div>
 
                     {{-- Estado del paquete --}}
@@ -40,6 +47,12 @@
                                 $statusLabels = [
                                     'pending' => 'Pendiente',
                                     'in_transit' => 'En Tránsito',
+                                    'transit' => 'En tránsito',
+                                    'pickup' => 'En reparto',
+                                    'undelivered' => 'Intento de entrega',
+                                    'exception' => 'Incidencia',
+                                    'expired' => 'Sin actualizaciones',
+                                    'notfound' => 'Sin información del transportista',
                                     'received' => 'Recibido',
                                     'in_customs' => 'En Aduana',
                                     'delivered' => 'Entregado',
@@ -53,6 +66,37 @@
                         </div>
                     </div>
 
+                    @if (!empty($events))
+                        @php($latest = $events[0])
+                        <section class="border-t border-white/20 pt-5 text-white">
+                            <h2 class="text-xl font-semibold mb-2">Última actualización</h2>
+                            <p class="font-medium">{{ $latest['description'] }}</p>
+                            @if ($latest['location'])
+                                <p>{{ $latest['location'] }}</p>
+                            @endif
+                            @if ($latest['date'])
+                                <p>{{ $latest['date'] }}</p>
+                            @endif
+                        </section>
+                        <details class="mt-6 text-white">
+                            <summary class="cursor-pointer font-semibold underline">Ver todo el historial de seguimiento</summary>
+                            <ol class="mt-3 divide-y divide-white/20">
+                                @foreach ($events as $event)
+                                    <li class="py-3">
+                                        <p class="font-medium">{{ $event['description'] }}</p>
+                                        @if ($event['location'])
+                                            <p>{{ $event['location'] }}</p>
+                                        @endif
+                                        @if ($event['date'])
+                                            <p>{{ $event['date'] }}</p>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ol>
+                        </details>
+                    @else
+                        <p class="text-white/80">Todavía no hay movimientos disponibles para este envío.</p>
+                    @endif
                 </x-ui.card>
             </div>
         </x-ui.container>

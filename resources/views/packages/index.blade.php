@@ -16,20 +16,6 @@
             <a href="{{ route('tracking.index') }}" class="glass-button">Buscar tracking</a>
         </div>
 
-        <x-ui.card glassmorphism="true" padding="lg" class="mb-6">
-            <h3 class="text-xl font-semibold text-white mb-4">Agregar paquete</h3>
-            <form action="{{ route('packages.store') }}" method="POST" class="flex gap-3 flex-wrap">
-                @csrf
-                <input type="text" name="tracking_number" value="{{ old('tracking_number') }}"
-                    placeholder="Número de tracking o guía"
-                    class="flex-1 min-w-[200px] rounded-lg border-white/20 bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-white/30">
-                <button type="submit" class="glass-button">Agregar</button>
-            </form>
-            @error('tracking_number')
-                <p class="mt-2 text-red-300 text-sm">{{ $message }}</p>
-            @enderror
-        </x-ui.card>
-
         <x-ui.card glassmorphism="true" padding="lg">
             <h3 class="text-xl font-semibold text-white mb-4">Mis paquetes</h3>
 
@@ -39,7 +25,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                     <p class="text-white/70 mb-4">Aún no tienes paquetes registrados.</p>
-                    <p class="text-white/50 text-sm mb-4">Agrega un número de tracking para ver el estado de tus envíos.</p>
+                    <p class="text-white/50 text-sm mb-4">Aquí aparecerán los envíos que Flat Rate Imports registre a tu nombre.</p>
                     <a href="{{ route('tracking.index') }}" class="glass-button">Buscar tracking</a>
                 </div>
             @else

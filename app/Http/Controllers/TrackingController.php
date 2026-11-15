@@ -3,22 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
-use App\Services\TrackingService;
 use Illuminate\Http\Request;
 
 class TrackingController extends Controller
 {
-    public function __construct(private TrackingService $trackingService) {}
-
     public function index()
     {
-        return redirect()->route('home')->withFragment('tracking');
+        return view('tracking.index');
     }
 
     public function search(Request $request)
     {
         $validated = $request->validate([
-            'tracking_number' => 'required|string|min:3|max:100',
+            'tracking_number' => ['required', 'string', 'min:3', 'max:100', 'regex:/\A[A-Za-z0-9-]+\z/'],
+        ], [
+            'tracking_number.regex' => 'Ingresa el número de seguimiento con letras, números o guiones.',
         ]);
 
         return redirect()->route('tracking.show', ['trackingNumber' => $validated['tracking_number']]);
@@ -27,20 +26,22 @@ class TrackingController extends Controller
     public function show(string $trackingNumber)
     {
         $trackingNumber = trim($trackingNumber);
-        abort_unless(mb_strlen($trackingNumber) >= 3 && mb_strlen($trackingNumber) <= 100, 404);
+        abort_unless(preg_match('/\A[A-Za-z0-9-]{3,100}\z/', $trackingNumber), 404);
 
         $package = Package::findByTracking($trackingNumber);
-        $status = $package?->status;
         if ($package === null) {
-            $status = $this->trackingService->fetchTrackingInfo($trackingNumber)['status'] ?? null;
+            return redirect()->route('tracking.index')
+                ->withInput(['tracking_number' => $trackingNumber])
+                ->with('tracking_error', 'Aún no hay un envío registrado con este número de seguimiento.');
         }
 
-        if ($status === null) {
-            return redirect()->route('home')->withFragment('tracking')
-                ->with('tracking_error', 'No se encontró información para ese número de seguimiento.');
-        }
+        $status = $package->status;
+        $carrier = $package->carrier;
+        $events = collect($package->tracking_history ?? [])
+            ->filter(fn ($event) => is_array($event) && ($event['public'] ?? false) === true)
+            ->reverse()->sortByDesc('date')->values()->all();
 
-        return response()->view('tracking.result', compact('trackingNumber', 'status'))
+        return response()->view('tracking.result', compact('trackingNumber', 'status', 'carrier', 'events'))
             ->header('Cache-Control', 'private, no-store');
     }
 }
