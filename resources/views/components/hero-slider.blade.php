@@ -50,7 +50,7 @@
                 'image' => 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=1200&h=600&fit=crop',
                 'video' => null,
                 'cta' => 'Rastrear Paquete',
-                'cta_link' => 'https://flatrateimports.store/apps/track-order',
+                'cta_link' => route('tracking.index', absolute: false),
                 'title_color' => '#ffffff',
                 'subtitle_color' => '#ffffff'
             ]
@@ -62,9 +62,23 @@
     x-data="{ 
         currentSlide: 0,
         autoPlayInterval: null,
+        soundRequested: false,
+        soundEnabled: false,
+        videoReady: false,
+        videoFailed: false,
+        youtubeReady: false,
+        youtubePlayer: null,
         slides: @js($sliders->map(function($slider) {
             $video = $slider->video ?? null;
             $youtubeEmbed = $video ? \App\Models\Slider::getYouTubeEmbedUrl($video) : null;
+            $ctaLink = $slider->cta_link ?? '#';
+            $legacyTrackingLink = rtrim($ctaLink, '/') === 'https://flatrateimports.store/apps/track-order';
+            $maritimePreviewLink = preg_match('/\Ahttps:\/\/[^\/]+\.shopifypreview\.com\/blogs\/news\/articles(?:\?|\z)/i', $ctaLink)
+                && strcasecmp(trim($slider->cta ?? ''), 'Ver Estado de Carga') === 0;
+            if ($legacyTrackingLink || $maritimePreviewLink) {
+                $ctaLink = route('tracking.index', absolute: false);
+            }
+
             return [
                 'id' => $slider->id,
                 'title' => $slider->title,
@@ -74,21 +88,107 @@
                 'video' => $youtubeEmbed ? null : $video,
                 'videoYoutube' => $youtubeEmbed,
                 'cta' => $slider->cta ?? '',
-                'ctaLink' => $slider->cta_link ?? '#',
+                'ctaLink' => $ctaLink,
                 'titleColor' => $slider->title_color ?? '#ffffff',
                 'subtitleColor' => $slider->subtitle_color ?? '#ffffff'
             ];
         })->values()->all()),
         nextSlide() {
-            this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+            this.goToSlide((this.currentSlide + 1) % this.slides.length);
         },
         prevSlide() {
-            this.currentSlide = (this.currentSlide - 1 + this.slides.length) % this.slides.length;
+            this.goToSlide((this.currentSlide - 1 + this.slides.length) % this.slides.length);
         },
         goToSlide(index) {
+            if (this.currentSlide === index) return;
+            this.soundEnabled = false;
+            this.videoReady = false;
+            this.videoFailed = false;
+            this.youtubeReady = false;
+            window.Alpine.raw(this.youtubePlayer)?.destroy();
+            this.youtubePlayer = null;
             this.currentSlide = index;
         },
+        connectYouTube(frame) {
+            if (!window.YT?.Player && !window.heroSliderYouTubeApi) {
+                window.heroSliderYouTubeApi = new Promise((resolve, reject) => {
+                    const previous = window.onYouTubeIframeAPIReady;
+                    window.onYouTubeIframeAPIReady = () => {
+                        resolve();
+                        previous?.();
+                    };
+                    const script = document.createElement('script');
+                    script.src = 'https://www.youtube.com/iframe_api';
+                    script.onerror = reject;
+                    document.head.append(script);
+                });
+            }
+
+            (window.YT?.Player ? Promise.resolve() : window.heroSliderYouTubeApi).then(() => {
+                if (!frame.isConnected) return;
+                this.youtubePlayer = new window.YT.Player(frame, {
+                    events: {
+                        onReady: ({ target }) => {
+                            if (window.Alpine.raw(this.youtubePlayer) !== target) return;
+                            this.youtubeReady = true;
+                            this.applyYouTubeSound(target, this.soundRequested);
+                        },
+                        onAutoplayBlocked: ({ target }) => {
+                            if (window.Alpine.raw(this.youtubePlayer) !== target || !this.soundEnabled) return;
+                            this.applyYouTubeSound(target, false);
+                            target.playVideo();
+                        },
+                        onError: ({ target }) => {
+                            if (window.Alpine.raw(this.youtubePlayer) === target) this.handleVideoError();
+                        }
+                    }
+                });
+            }).catch(() => {});
+        },
+        handleVideoError() {
+            this.videoReady = false;
+            this.youtubeReady = false;
+            this.videoFailed = true;
+            this.soundEnabled = false;
+            if (!this.$root.matches(':hover')) this.startAutoPlay();
+        },
+        applyYouTubeSound(player, enabled) {
+            this.soundEnabled = enabled;
+            if (enabled) {
+                if (player.getVolume() === 0) player.setVolume(50);
+                player.unMute();
+                player.playVideo();
+            } else {
+                player.mute();
+            }
+        },
+        applyNativeSound(video, enabled) {
+            if (enabled && video.volume === 0) video.volume = 0.5;
+            video.muted = !enabled;
+            this.soundEnabled = enabled;
+            if (!enabled) return;
+
+            video.play().catch(() => {
+                if (!video.isConnected || !this.soundEnabled) return;
+                video.muted = true;
+                this.soundEnabled = false;
+                video.play().catch(() => {});
+            });
+        },
+        get soundControlOn() {
+            return this.videoReady || this.youtubeReady ? this.soundEnabled : this.soundRequested;
+        },
+        toggleSound() {
+            const enabled = !this.soundControlOn;
+            this.soundRequested = enabled;
+            if (this.youtubeReady) {
+                this.applyYouTubeSound(window.Alpine.raw(this.youtubePlayer), enabled);
+            } else if (this.videoReady) {
+                this.applyNativeSound(this.$root.querySelector('video'), enabled);
+            }
+        },
         startAutoPlay() {
+            if (this.autoPlayInterval !== null) return;
             this.autoPlayInterval = setInterval(() => {
                 this.nextSlide();
             }, 10000);
@@ -104,8 +204,8 @@
     @mouseenter="stopAutoPlay()"
     @mouseleave="startAutoPlay()"
     class="hero-slider relative overflow-hidden"
-    @keydown.left.window="prevSlide()"
-    @keydown.right.window="nextSlide()"
+    @keydown.left.prevent="prevSlide()"
+    @keydown.right.prevent="nextSlide()"
 >
     {{-- Slides --}}
     <div class="relative w-full h-full">
@@ -122,18 +222,20 @@
             >
                 {{-- Background: Video (YouTube iframe o archivo directo) o Imagen --}}
                 <div class="absolute inset-0 z-0">
-                    <template x-if="slide.videoYoutube">
+                    <template x-if="currentSlide === index && slide.videoYoutube && !videoFailed">
                         <div class="absolute inset-0 overflow-hidden">
                             <iframe 
-                                :src="slide.videoYoutube" 
+                                :src="slide.videoYoutube + '&amp;enablejsapi=1&amp;disablekb=1&amp;playsinline=1&amp;fs=0&amp;origin=' + encodeURIComponent(window.location.origin)"
+                                x-init="$nextTick(() => connectYouTube($el))"
                                 class="hero-slider-youtube-embed absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                                title="Video del carrusel"
+                                tabindex="-1"
                                 frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen
+                                allow="autoplay; encrypted-media"
                             ></iframe>
                         </div>
                     </template>
-                    <template x-if="!slide.videoYoutube && slide.video">
+                    <template x-if="currentSlide === index && !slide.videoYoutube && slide.video && !videoFailed">
                         <video 
                             :src="slide.video" 
                             :poster="slide.image || ''"
@@ -141,10 +243,14 @@
                             muted
                             loop
                             playsinline
-                            class="w-full h-full object-cover"
+                            disablepictureinpicture
+                            disableremoteplayback
+                            x-on:canplay="if (!videoReady) { videoReady = true; applyNativeSound($el, soundRequested) }"
+                            x-on:error="handleVideoError()"
+                            class="w-full h-full object-cover pointer-events-none"
                         ></video>
                     </template>
-                    <template x-if="!slide.videoYoutube && !slide.video && slide.image">
+                    <template x-if="slide.image && ((!slide.videoYoutube && !slide.video) || (currentSlide === index && videoFailed))">
                         <img 
                             :src="slide.image" 
                             :alt="slide.title"
@@ -189,6 +295,16 @@
         </template>
     </div>
 
+    <button
+        type="button"
+        x-cloak
+        x-show="slides.some(slide => slide.video || slide.videoYoutube)"
+        @click="toggleSound()"
+        x-text="soundControlOn ? 'Silenciar video' : 'Activar sonido'"
+        class="absolute rounded-full px-4 py-2 text-sm font-semibold text-white theme-focus"
+        style="z-index: 20; left: 1rem; bottom: 2.75rem; min-height: 44px; background: #17241d; border: 1px solid rgba(255, 255, 255, .65);"
+    >Activar sonido</button>
+
     {{-- Navigation Arrows --}}
     <button 
         @click="prevSlide()"
@@ -217,6 +333,7 @@
                 @click="goToSlide(index)"
                 :class="currentSlide === index ? 'hero-slider-indicator-active' : 'hero-slider-indicator'"
                 :aria-label="'Ir al slide ' + (index + 1)"
+                :aria-current="currentSlide === index ? 'true' : null"
             ></button>
         </template>
     </div>

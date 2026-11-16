@@ -21,7 +21,7 @@ class QuoteShare extends Model
     public static function generateToken(): string
     {
         do {
-            $token = bin2hex(random_bytes(12));
+            $token = 'v2_' . bin2hex(random_bytes(12));
         } while (static::where('token', $token)->exists());
 
         return $token;

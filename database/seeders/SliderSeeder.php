@@ -49,7 +49,7 @@ class SliderSeeder extends Seeder
                 'description' => 'Con nuestro sistema de tracking, podrás seguir el estado de tu paquete en cada etapa del proceso de importación.',
                 'image' => 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=1200&h=600&fit=crop',
                 'cta' => 'Rastrear Paquete',
-                'cta_link' => 'https://flatrateimports.store/apps/track-order',
+                'cta_link' => '/tracking',
                 'order' => 4,
                 'is_active' => true,
             ],

@@ -34,9 +34,6 @@ Guía paso a paso para subir el proyecto Laravel a Hostinger (shared hosting o V
 composer install --optimize-autoloader --no-dev
 npm ci
 npm run build
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
 ```
 
 2. **Comprime** el proyecto (excluye `node_modules`, `.env`, `.git`):
@@ -64,6 +61,8 @@ Copia el contenido de `public/` a `public_html/` y edita `public_html/index.php`
 require __DIR__.'/../flat_rate_imports/vendor/autoload.php';
 $app = require_once __DIR__.'/../flat_rate_imports/bootstrap/app.php';
 ```
+
+Mantén el código, las credenciales y los respaldos fuera de la raíz pública. La regla del repositorio es temporal para instalaciones existentes. Comprueba que el servidor aplica `.htaccess` y que la raíz apunta a `public` antes de promover el despliegue.
 
 ### 4. Configurar .env en producción
 
@@ -114,11 +113,10 @@ php artisan key:generate
 # Crear enlace simbólico para storage
 php artisan storage:link
 
-# Ejecutar migraciones
-php artisan migrate --force
+# Revisar las migraciones pendientes sin cambiar el esquema
+php artisan migrate:status
 
-# Poblar productos y métodos de envío (necesario para el cotizador)
-php artisan db:seed --force
+# Si importaste una base existente, conserva su catálogo y sus usuarios.
 
 # Limpiar caché del cotizador
 php artisan cache:clear
@@ -248,7 +246,7 @@ Sube la carpeta `public/build/` completa al servidor.
 
 ### Productos y métodos de envío no aparecen en el cotizador
 
-1. Ejecuta los seeders: `php artisan db:seed --force`
+1. Comprueba en el panel que el catálogo y las tarifas importados estén activos.
 2. Limpia la caché del cotizador: `php artisan cotizador:clear-cache`
 3. Si sigue vacío, limpia toda la caché: `php artisan cache:clear`
 

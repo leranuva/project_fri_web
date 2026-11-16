@@ -141,7 +141,7 @@
                     <div id="icon_preview" class="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
                         <p class="text-sm text-white/70 mb-2">Vista previa del icono:</p>
                         <div class="flex items-center justify-center p-4 bg-white/10 rounded-lg">
-                            <div id="preview_icon_content">{!! $benefit->icon_svg !!}</div>
+                            <div id="preview_icon_content"><img src="data:image/svg+xml;base64,{{ base64_encode((string) ($benefit->icon_svg)) }}" alt="" class="max-w-full max-h-full"></div>
                         </div>
                     </div>
                 </div>
@@ -201,7 +201,10 @@
             const svgCode = e.target.value.trim();
             
             if (svgCode) {
-                previewContent.innerHTML = svgCode;
+                const previewImage = document.createElement("img");
+                previewImage.alt = "";
+                previewImage.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgCode);
+                previewContent.replaceChildren(previewImage);
                 preview.style.display = 'block';
             } else {
                 preview.style.display = 'none';

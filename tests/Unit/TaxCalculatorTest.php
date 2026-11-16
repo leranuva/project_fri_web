@@ -98,21 +98,22 @@ class TaxCalculatorTest extends TestCase
         $this->assertSame(0.12, $result['iva']);
     }
 
-    public function test_impuestos_porcentuales_usan_base_producto_mas_envio(): void
+    public function test_fodinfa_incluye_ad_valorem_en_la_cotizacion_aerea(): void
     {
+        config(['products.taxes.iva' => 0.15, 'products.taxes.fodinfa' => 0.005]);
+
         $result = $this->calculator->calculate(
-            productCost: 100,
-            shippingCost: 50,
+            productCost: 200,
+            shippingCost: 64.20,
             adValorem: 0.15,
             arancelEspecifico: 0,
-            shippingMethod: 'maritimo',
+            shippingMethod: 'aereo',
             isCourier4x4Valid: false
         );
 
-        $base = 150;
-        $this->assertEqualsWithDelta(22.5, $result['impuestoAdvalorem'], 0.00001);
-        $this->assertEqualsWithDelta(0.75, $result['impuestoFodinfa'], 0.00001);
-        $expectedIva = ($base + $result['impuestoAdvalorem'] + $result['impuestoFodinfa']) * 0.12;
-        $this->assertEqualsWithDelta($expectedIva, $result['impuestoIva'], 0.00001);
+        $this->assertSame(39.63, round($result['impuestoAdvalorem'], 2));
+        $this->assertSame(1.52, round($result['impuestoFodinfa'], 2));
+        $this->assertSame(45.80, round($result['impuestoIva'], 2));
+        $this->assertSame(86.95, round($result['totalImpuestos'], 2));
     }
 }

@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('cotizador_sections')) {
+            return;
+        }
+
         Schema::table('cotizador_sections', function (Blueprint $table) {
             $table->string('store_button_url_base', 500)->nullable()->after('store_button_text_color');
             $table->string('store_button_url_path', 255)->nullable()->after('store_button_url_base');
@@ -22,6 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('cotizador_sections')) {
+            return;
+        }
+
         Schema::table('cotizador_sections', function (Blueprint $table) {
             $table->dropColumn(['store_button_url_base', 'store_button_url_path']);
         });

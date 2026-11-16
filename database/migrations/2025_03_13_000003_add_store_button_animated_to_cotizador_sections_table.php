@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('cotizador_sections')) {
+            return;
+        }
+
         Schema::table('cotizador_sections', function (Blueprint $table) {
             $table->boolean('store_button_animated')->default(true)->after('store_button_visible');
         });
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('cotizador_sections')) {
+            return;
+        }
+
         Schema::table('cotizador_sections', function (Blueprint $table) {
             $table->dropColumn('store_button_animated');
         });

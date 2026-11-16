@@ -28,6 +28,12 @@ class VerifyUserEmail extends Command
      */
     public function handle()
     {
+        if (! app()->environment('local', 'testing')) {
+            $this->error('En este entorno, cada usuario debe verificar su correo mediante el enlace.');
+
+            return self::FAILURE;
+        }
+
         if ($this->option('all')) {
             return $this->verifyAll();
         }

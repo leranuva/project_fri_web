@@ -66,7 +66,7 @@
                                 <td class="py-3 px-4">
                                     @if($store->logo_url)
                                         <div class="w-12 h-12 flex items-center justify-center bg-white/10 rounded p-1">
-                                            {!! $store->logo_url !!}
+                                            <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($store->logo_url)) }}" alt="" class="max-w-full max-h-full">
                                         </div>
                                     @else
                                         <span class="text-white/50 text-xs">Sin logo</span>
@@ -124,7 +124,7 @@
                                 <h3 class="text-lg font-semibold text-white mb-2">{{ $store->name }}</h3>
                                 @if($store->logo_url)
                                     <div class="w-16 h-16 flex items-center justify-center bg-white/10 rounded p-1 mb-2">
-                                        {!! $store->logo_url !!}
+                                        <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($store->logo_url)) }}" alt="" class="max-w-full max-h-full">
                                     </div>
                                 @endif
                             </div>

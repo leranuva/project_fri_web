@@ -2,12 +2,27 @@
 
 namespace App\Models;
 
+use App\Services\Cotizador\Catalog;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class ShippingRate extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        $invalidateCatalog = static function (self $model): void {
+            $model->getConnection()->afterCommit(
+                static fn () => Cache::forget(Catalog::SHIPPING_CACHE_KEY)
+            );
+        };
+
+        static::saved($invalidateCatalog);
+        static::deleted($invalidateCatalog);
+    }
 
     protected $fillable = [
         'method',
@@ -109,7 +124,12 @@ class ShippingRate extends Model
             ->forMethod($method)
             ->ordered()
             ->get();
-        
+
+        return static::summarizeWeightRanges($rates);
+    }
+
+    public static function summarizeWeightRanges(Collection $rates): array
+    {
         if ($rates->isEmpty()) {
             return [
                 'min_weight' => null,

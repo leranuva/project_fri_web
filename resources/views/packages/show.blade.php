@@ -15,9 +15,13 @@
             </a>
             <form action="{{ route('packages.refresh', $package->tracking_number) }}" method="POST" class="inline">
                 @csrf
-                <button type="submit" class="glass-button text-sm">Actualizar información</button>
+                  <button type="submit" class="glass-button text-sm">Consultar último estado registrado</button>
             </form>
         </div>
+
+        @if(session('tracking_error'))
+            <p role="alert" class="mb-4 text-white">{{ session('tracking_error') }}</p>
+        @endif
 
         @if(session('success'))
             <div class="mb-4 p-4 bg-green-500/20 rounded-lg text-green-200">

@@ -210,6 +210,8 @@
                     </div>
                 </div>
 
+                @include('admin.packages.public-event')
+
                 {{-- Notas --}}
                 <div>
                     <x-input-label for="notes" :value="__('Notas')" class="text-white/90 mb-2" />

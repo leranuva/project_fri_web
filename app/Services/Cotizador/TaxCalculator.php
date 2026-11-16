@@ -9,8 +9,8 @@ class TaxCalculator
     /**
      * Calcula impuestos (advalorem, fodinfa, IVA, arancel específico)
      *
-     * La base para ad-valorem y FODINFA es (costo producto + costo envío).
-     * El IVA se aplica sobre esa misma base más ad-valorem y FODINFA (cascada).
+     * El ad-valorem se calcula sobre producto más envío.
+     * El FODINFA incluye también el ad-valorem, y el IVA incluye ambos impuestos.
      *
      * @param float $productCost Costo del producto
      * @param float $shippingCost Costo de envío
@@ -38,8 +38,9 @@ class TaxCalculator
             $base = $productCost + $shippingCost;
 
             $impuestoAdvalorem = $base * $adValorem;
-            $impuestoFodinfa = $base * $fodinfa;
-            $impuestoIva = ($base + $impuestoAdvalorem + $impuestoFodinfa) * $iva;
+            $baseFodinfa = $base + $impuestoAdvalorem;
+            $impuestoFodinfa = $baseFodinfa * $fodinfa;
+            $impuestoIva = ($baseFodinfa + $impuestoFodinfa) * $iva;
         }
 
         $totalImpuestos = $impuestoAdvalorem + $impuestoFodinfa + $impuestoIva + $arancelEspecifico;

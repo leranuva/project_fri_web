@@ -39,6 +39,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('tracking.index') }}" class="nav-link theme-focus {{ request()->routeIs('tracking.*') ? 'active theme-nav-active' : '' }}">
+                        <span>Seguimiento</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('blog.index') }}" class="nav-link theme-focus {{ request()->routeIs('blog.*') ? 'active theme-nav-active' : '' }}">
                         <svg class="nav-icon" viewBox="0 0 24 24">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -260,7 +265,16 @@
             </li>
             <li class="mobile-menu-item">
                 <a 
-                    href="{{ route('blog.index') }}" 
+                    href="{{ route('tracking.index') }}"
+                    class="mobile-menu-link {{ request()->routeIs('tracking.*') ? 'active theme-nav-active' : '' }}"
+                    @click="mobileMenuOpen = false"
+                >
+                    <span>Seguimiento</span>
+                </a>
+            </li>
+            <li class="mobile-menu-item">
+                <a
+                    href="{{ route('blog.index') }}"
                     class="mobile-menu-link {{ request()->routeIs('blog.*') ? 'active theme-nav-active' : '' }}"
                     @click="mobileMenuOpen = false"
                 >

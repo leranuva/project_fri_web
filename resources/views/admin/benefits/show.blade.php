@@ -42,7 +42,7 @@
                         <x-ui.card glassmorphism="true" class="text-center benefit-card">
                             <div class="mb-4">
                                 <div class="flex items-center justify-center">
-                                    {!! $benefit->icon_svg !!}
+                                    <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($benefit->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                                 </div>
                             </div>
                             <h3 
@@ -103,7 +103,7 @@
                         <p class="text-white/60 text-sm mb-2">Icono SVG</p>
                         <div class="p-4 rounded-lg bg-white/5 border border-white/10">
                             <div class="flex items-center justify-center mb-4">
-                                {!! $benefit->icon_svg !!}
+                                <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($benefit->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                             </div>
                             <pre class="text-xs text-white/60 overflow-x-auto"><code>{{ $benefit->icon_svg }}</code></pre>
                         </div>

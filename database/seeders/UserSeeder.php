@@ -14,8 +14,10 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Crear o actualizar usuarios (idempotente para BD importada)
-        User::updateOrCreate(
+        if (! app()->environment('local', 'testing')) {
+            return;
+        }
+        User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Admin Principal',
@@ -25,7 +27,7 @@ class UserSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
+        User::firstOrCreate(
             ['email' => 'admin2@example.com'],
             [
                 'name' => 'Admin Secundario',
@@ -35,7 +37,7 @@ class UserSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
+        User::firstOrCreate(
             ['email' => 'customer@example.com'],
             [
                 'name' => 'Cliente Uno',
@@ -45,7 +47,7 @@ class UserSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
+        User::firstOrCreate(
             ['email' => 'customer2@example.com'],
             [
                 'name' => 'Cliente Dos',

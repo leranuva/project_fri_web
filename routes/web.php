@@ -23,8 +23,8 @@ Route::get('/blog/{slug}', [\App\Http\Controllers\BlogController::class, 'show']
 
 // Tracking de paquetes (público)
 Route::get('/tracking', [\App\Http\Controllers\TrackingController::class, 'index'])->name('tracking.index');
-Route::post('/tracking/search', [\App\Http\Controllers\TrackingController::class, 'search'])->name('tracking.search');
-Route::get('/tracking/{trackingNumber}', [\App\Http\Controllers\TrackingController::class, 'show'])->name('tracking.show');
+Route::post('/tracking/search', [\App\Http\Controllers\TrackingController::class, 'search'])->middleware('throttle:tracking')->name('tracking.search');
+Route::get('/tracking/{trackingNumber}', [\App\Http\Controllers\TrackingController::class, 'show'])->middleware('throttle:tracking')->name('tracking.show');
 
 // Calculadoras virales (Fase 13.1)
 Route::get('/calculadora-aranceles', [\App\Http\Controllers\CalculatorController::class, 'aranceles'])->name('calculator.aranceles');
@@ -87,8 +87,8 @@ Route::get('/dashboard', function () {
     return view('dashboard', compact('stats', 'analytics'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Rutas de perfil, cotizaciones y paquetes (requieren autenticación)
-Route::middleware('auth')->group(function () {
+// Rutas de perfil, cotizaciones y paquetes
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -96,13 +96,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/pagar/{quote}', [\App\Http\Controllers\PaymentController::class, 'show'])->name('payments.show');
     Route::post('/pagar/{quote}', [\App\Http\Controllers\PaymentController::class, 'process'])->name('payments.process');
     Route::get('/mis-paquetes', [\App\Http\Controllers\PackageHistoryController::class, 'index'])->name('packages.index');
-    Route::post('/mis-paquetes', [\App\Http\Controllers\PackageHistoryController::class, 'store'])->name('packages.store');
+    Route::post('/mis-paquetes', [\App\Http\Controllers\PackageHistoryController::class, 'store'])->middleware('throttle:tracking')->name('packages.store');
     Route::get('/mis-paquetes/{trackingNumber}', [\App\Http\Controllers\PackageHistoryController::class, 'show'])->name('packages.show');
-    Route::post('/mis-paquetes/{trackingNumber}/refresh', [\App\Http\Controllers\PackageHistoryController::class, 'refresh'])->name('packages.refresh');
+    Route::post('/mis-paquetes/{trackingNumber}/refresh', [\App\Http\Controllers\PackageHistoryController::class, 'refresh'])->middleware('throttle:tracking')->name('packages.refresh');
 });
 
 // Rutas de administración (requieren autenticación y rol admin)
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     Route::resource('products', \App\Http\Controllers\Admin\ProductController::class);
     Route::resource('shipping-rates', \App\Http\Controllers\Admin\ShippingRateController::class);

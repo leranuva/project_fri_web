@@ -126,7 +126,7 @@
                                 @endif
                                 @if($store->logo_url)
                                     <div id="current_logo_svg_preview" class="max-w-full max-h-32 flex items-center justify-center" style="display: {{ $store->logo_image ? 'none' : 'block' }};">
-                                        {!! $store->logo_url !!}
+                                        <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($store->logo_url)) }}" alt="" class="max-w-full max-h-full">
                                     </div>
                                 @endif
                             </div>

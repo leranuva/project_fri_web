@@ -30,9 +30,10 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
 
-        // Redirigir a verificación de email si no está verificado
-        if (!$user->hasVerifiedEmail()) {
-            return redirect()->route('verification.notice');
+        if (! $user->hasVerifiedEmail()) {
+            $status = app(\App\Services\EmailVerificationDelivery::class)->send($user);
+
+            return redirect()->route('verification.notice')->with('status', $status);
         }
 
         // Redirigir según el rol del usuario

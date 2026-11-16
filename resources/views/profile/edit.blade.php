@@ -14,6 +14,22 @@
                 </div>
             </x-ui.card>
 
+            @if (\App\Http\Controllers\Auth\SocialAuthController::enabled('google'))
+                <x-ui.card glassmorphism="true" padding="lg" class="profile-card">
+                    <h2 class="text-lg font-semibold text-white">Cuenta de Google</h2>
+                    @if (session('error'))
+                        <p role="alert" class="mt-2 text-red-200">{{ session('error') }}</p>
+                    @endif
+                    @if ($user->google_id)
+                        <p class="mt-2 text-white">Tu cuenta de Google está vinculada.</p>
+                    @else
+                        <a href="{{ route('profile.google.link') }}" class="auth-form-google-button mt-3">
+                            Vincular Google
+                        </a>
+                    @endif
+                </x-ui.card>
+            @endif
+
             {{-- Actualizar Contraseña --}}
             <x-ui.card glassmorphism="true" padding="lg" class="profile-card">
                 <div class="max-w-2xl">

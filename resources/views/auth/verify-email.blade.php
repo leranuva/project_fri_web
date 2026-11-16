@@ -8,11 +8,17 @@
             </div>
             <h2 class="text-2xl font-bold text-white mb-2">Verifica tu Email</h2>
             <p class="text-sm sm:text-base text-white/80">
-                ¡Gracias por registrarte! Antes de comenzar, por favor verifica tu dirección de correo electrónico haciendo clic en el enlace que acabamos de enviarte.
+                Abre el enlace de verificación en tu correo para acceder a tu cuenta.
             </p>
     </div>
 
-    @if (session('status') == 'verification-link-sent')
+    @if (session('status') === 'verification-delivery-failed')
+        <p role="alert" class="mb-4 text-sm text-red-200">No pudimos enviar el correo en este momento. Intenta reenviarlo más tarde.</p>
+    @elseif (session('status') === 'verification-link-recent')
+        <p role="status" class="mb-4 text-sm text-white/80">Espera un minuto antes de solicitar otro enlace.</p>
+    @endif
+
+    @if (session('status') === 'verification-link-sent')
             <div class="mb-4 sm:mb-6 p-4 rounded-lg bg-green-500/20 border border-green-500/30">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-green-300" fill="currentColor" viewBox="0 0 20 20">

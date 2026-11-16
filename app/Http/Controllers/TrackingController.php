@@ -3,120 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Package;
-use App\Services\TrackingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class TrackingController extends Controller
 {
-    protected $trackingService;
-
-    public function __construct(TrackingService $trackingService)
-    {
-        $this->trackingService = $trackingService;
-    }
-
-    /**
-     * Mostrar formulario de búsqueda (redirige a home)
-     */
     public function index()
     {
-        return redirect()->route('home')->withFragment('tracking');
+        return view('tracking.index');
     }
 
-    /**
-     * Buscar paquete por número de tracking
-     */
     public function search(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'tracking_number' => 'required|string|min:3|max:100',
+        $validated = $request->validate([
+            'tracking_number' => ['required', 'string', 'min:3', 'max:100', 'regex:/\A[A-Za-z0-9-]+\z/'],
         ], [
-            'tracking_number.required' => 'Por favor ingresa un número de tracking o guía.',
-            'tracking_number.min' => 'El número de tracking debe tener al menos 3 caracteres.',
-            'tracking_number.max' => 'El número de tracking no puede exceder 100 caracteres.',
+            'tracking_number.regex' => 'Ingresa el número de seguimiento con letras, números o guiones.',
         ]);
 
-        if ($validator->fails()) {
-            return redirect()
-                ->route('home')
-                ->withFragment('tracking')
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $trackingNumber = trim($request->input('tracking_number'));
-
-        // Buscar paquete en la base de datos primero
-        $package = Package::findByTracking($trackingNumber);
-
-        // Si no se encuentra, buscar parcialmente
-        if (!$package) {
-            $package = Package::byTracking($trackingNumber)->first();
-        }
-
-        // Si aún no se encuentra, intentar obtener información automáticamente
-        if (!$package) {
-            try {
-                $userId = auth()->check() ? auth()->id() : null;
-                $package = $this->trackingService->createOrUpdatePackage($trackingNumber, $userId);
-            } catch (\Exception $e) {
-                \Log::error('Error al buscar tracking automático: ' . $e->getMessage());
-                
-                return redirect()
-                    ->route('home')
-                    ->withFragment('tracking')
-                    ->with('tracking_error', 'No se pudo obtener información automática para el número de tracking: ' . $trackingNumber)
-                    ->withInput();
-            }
-        }
-
-        if ($package) {
-            return view('tracking.result', [
-                'package' => $package,
-                'tracking_number' => $trackingNumber,
-            ]);
-        }
-
-        return redirect()
-            ->route('home')
-            ->withFragment('tracking')
-            ->with('tracking_error', 'No se encontró información para el número de tracking: ' . $trackingNumber)
-            ->withInput();
+        return redirect()->route('tracking.show', ['trackingNumber' => $validated['tracking_number']]);
     }
 
-    /**
-     * Mostrar resultado del tracking
-     */
     public function show(string $trackingNumber)
     {
+        $trackingNumber = trim($trackingNumber);
+        abort_unless(preg_match('/\A[A-Za-z0-9-]{3,100}\z/', $trackingNumber), 404);
+
         $package = Package::findByTracking($trackingNumber);
-
-        // Si no se encuentra, intentar obtener información automáticamente
-        if (!$package) {
-            try {
-                $userId = auth()->check() ? auth()->id() : null;
-                $package = $this->trackingService->createOrUpdatePackage($trackingNumber, $userId);
-            } catch (\Exception $e) {
-                \Log::error('Error al buscar tracking automático: ' . $e->getMessage());
-                
-                return redirect()
-                    ->route('home')
-                    ->withFragment('tracking')
-                    ->with('tracking_error', 'No se pudo obtener información para el número de tracking: ' . $trackingNumber);
-            }
+        if ($package === null) {
+            return redirect()->route('tracking.index')
+                ->withInput(['tracking_number' => $trackingNumber])
+                ->with('tracking_error', 'Aún no hay un envío registrado con este número de seguimiento.');
         }
 
-        if ($package) {
-            return view('tracking.result', [
-                'package' => $package,
-                'tracking_number' => $trackingNumber,
-            ]);
-        }
+        $status = $package->status;
+        $carrier = $package->carrier;
+        $events = collect($package->tracking_history ?? [])
+            ->filter(fn ($event) => is_array($event) && ($event['public'] ?? false) === true)
+            ->reverse()->sortByDesc('date')->values()->all();
 
-        return redirect()
-            ->route('home')
-            ->withFragment('tracking')
-            ->with('tracking_error', 'No se encontró información para el número de tracking: ' . $trackingNumber);
+        return response()->view('tracking.result', compact('trackingNumber', 'status', 'carrier', 'events'))
+            ->header('Cache-Control', 'private, no-store');
     }
 }

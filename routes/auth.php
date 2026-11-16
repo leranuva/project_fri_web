@@ -15,33 +15,49 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:registration');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
-    Route::get('auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])
-        ->name('auth.google.redirect');
+    Route::get('auth/google/callback', [\App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
+        ->withoutMiddleware('guest')->defaults('provider', 'google')->name('auth.google.callback');
 
-    Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])
-        ->name('auth.google.callback');
+    foreach (['google' => 'google', 'x' => 'twitter', 'facebook' => 'facebook', 'apple' => 'apple'] as $slug => $provider) {
+        Route::get("auth/{$slug}", [\App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
+            ->defaults('provider', $provider)->name("auth.{$slug}.redirect");
+
+        if ($provider === 'google') {
+            continue;
+        }
+
+        Route::match([$provider === 'apple' ? 'POST' : 'GET'], "auth/{$slug}/callback", [\App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
+            ->defaults('provider', $provider)->name("auth.{$slug}.callback");
+    }
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('throttle:10,1')
         ->name('password.store');
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('profile/google/link', [\App\Http\Controllers\Auth\SocialAuthController::class, 'linkGoogle'])
+        ->middleware(['verified', 'password.confirm', 'throttle:10,1'])
+        ->name('profile.google.link');
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

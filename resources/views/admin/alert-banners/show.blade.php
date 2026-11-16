@@ -48,7 +48,7 @@
                             <div class="text-center">
                                 <div class="mb-6">
                                     <div class="flex items-center justify-center">
-                                        {!! $alertBanner->icon_svg !!}
+                                        <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($alertBanner->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                                     </div>
                                 </div>
                                 <h2 
@@ -135,7 +135,7 @@
                 <div class="p-6 rounded-xl bg-white/5 border border-white/10">
                     <h3 class="text-lg font-semibold text-white mb-4">Icono SVG</h3>
                     <div class="mb-4 p-4 bg-white/10 rounded-lg flex items-center justify-center">
-                        {!! $alertBanner->icon_svg !!}
+                        <img src="data:image/svg+xml;base64,{{ base64_encode((string) ($alertBanner->icon_svg)) }}" alt="" class="max-w-full max-h-full">
                     </div>
                     <div class="p-4 bg-white/5 rounded-lg">
                         <p class="text-sm text-white/70 mb-2">Código SVG:</p>

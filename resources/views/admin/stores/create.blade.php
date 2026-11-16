@@ -242,7 +242,10 @@
                 const logoSvg = e.target.value.trim();
                 
                 if (logoSvg) {
-                    previewContent.innerHTML = logoSvg;
+                    const previewImage = document.createElement("img");
+                previewImage.alt = "";
+                previewImage.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(logoSvg);
+                previewContent.replaceChildren(previewImage);
                     preview.style.display = 'block';
                 } else {
                     preview.style.display = 'none';

@@ -36,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiting();
 
+        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+            $event->extendSocialite('apple', \SocialiteProviders\Apple\Provider::class);
+        });
+
         // Registrar listeners de eventos
         Event::listen(Verified::class, SendWelcomeEmail::class);
         Event::listen(LeadCreated::class, SendLeadToWebhook::class);
@@ -71,6 +75,9 @@ class AppServiceProvider extends ServiceProvider
     protected function configureRateLimiting(): void
     {
         // Cotizador: 30 cálculos por minuto por IP
+        RateLimiter::for('registration', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+        RateLimiter::for('tracking', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
+
         RateLimiter::for('calculate-quotes', function (Request $request) {
             return Limit::perMinute(30)->by($request->ip());
         });

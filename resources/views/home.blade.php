@@ -1,4 +1,26 @@
 <x-guest-layout>
+    @php
+        $svgImage = static function (?string $svg, string $color = '#ffffff'): ?string {
+            if (! preg_match('/<svg\b[^>]*>/i', (string) $svg)) {
+                return null;
+            }
+
+            $svg = preg_replace_callback('/<svg\b[^>]*>/i', static function (array $match) use ($color): string {
+                $tag = $match[0];
+                $attributes = '';
+                if (! preg_match('/\sxmlns\s*=/', $tag)) {
+                    $attributes .= ' xmlns="http://www.w3.org/2000/svg"';
+                }
+                if (! preg_match('/\scolor\s*=/', $tag)) {
+                    $attributes .= ' color="'.$color.'"';
+                }
+
+                return substr_replace($tag, $attributes, 4, 0);
+            }, $svg, 1);
+
+            return 'data:image/svg+xml;base64,'.base64_encode($svg);
+        };
+    @endphp
     <div class="min-h-screen flex flex-col" style="padding-top: 0;">
         <section data-theme-explicit class="theme-text-primary text-center py-8 sm:py-14">
             <x-ui.container>
@@ -10,9 +32,6 @@
                 </p>
                 <div class="mt-6 flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
                     <a href="{{ route('cotizador') }}" class="glass-button glass-button-lg theme-focus justify-center">Cotizar mi envío</a>
-                    <a href="{{ route('register') }}" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/50 px-5 py-3 font-semibold theme-text-primary theme-focus hover:bg-white/10">
-                        Obtener mi casillero gratis
-                    </a>
                 </div>
             </x-ui.container>
         </section>
@@ -47,7 +66,9 @@
                                     <span class="text-2xl font-bold text-white">{{ $step->step_number }}</span>
                                 </div>
                                 <div class="flex items-center justify-center">
-                                    {!! $step->icon_svg !!}
+                                    @if ($source = $svgImage($step->icon_svg))
+                                        <img src="{{ $source }}" alt="" width="48" height="48" class="max-w-full">
+                                    @endif
                                 </div>
                             </div>
                             <h3 class="text-xl font-semibold mb-2 text-white">{{ $step->title }}</h3>
@@ -158,7 +179,9 @@
                         <div class="text-center">
                             <div class="mb-6">
                                 <div class="flex items-center justify-center">
-                                    {!! $alertBanner->icon_svg !!}
+                                    @if ($source = $svgImage($alertBanner->icon_svg, '#fde047'))
+                                        <img src="{{ $source }}" alt="" width="64" height="64" class="max-w-full">
+                                    @endif
                                 </div>
                             </div>
                             <h2 
@@ -248,7 +271,9 @@
                         <x-ui.card glassmorphism="true" class="text-center benefit-card">
                             <div class="mb-4">
                                 <div class="flex items-center justify-center">
-                                    {!! $benefit->icon_svg !!}
+                                    @if ($source = $svgImage($benefit->icon_svg))
+                                        <img src="{{ $source }}" alt="" width="48" height="48" class="max-w-full">
+                                    @endif
                                 </div>
                             </div>
                             <h3 
@@ -358,6 +383,9 @@
                     <x-ui.card glassmorphism="true" padding="lg" class="stores-section">
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                             @forelse($stores as $store)
+                                @php
+                                    $logoSvg = $svgImage($store->logo_url);
+                                @endphp
                                 <div class="store-logo">
                                     @if($store->logo_image || $store->logo_url)
                                         <a 
@@ -374,11 +402,19 @@
                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                 >
                                                 <div class="max-w-full max-h-full flex items-center justify-center store-logo-svg" style="display: none;">
-                                                    {!! $store->logo_url ?? '' !!}
+                                                    @if ($logoSvg)
+                                                        <img src="{{ $logoSvg }}" alt="{{ $store->name }}" class="max-w-full max-h-full">
+                                                    @else
+                                                        <span class="text-white/80 text-xs font-semibold text-center">{{ $store->name }}</span>
+                                                    @endif
                                                 </div>
                                             @elseif($store->logo_url)
                                                 <div class="max-w-full max-h-full flex items-center justify-center store-logo-svg">
-                                                    {!! $store->logo_url !!}
+                                                    @if ($logoSvg)
+                                                        <img src="{{ $logoSvg }}" alt="{{ $store->name }}" class="max-w-full max-h-full">
+                                                    @else
+                                                        <span class="text-white/80 text-xs font-semibold text-center">{{ $store->name }}</span>
+                                                    @endif
                                                 </div>
                                             @endif
                                         </a>
